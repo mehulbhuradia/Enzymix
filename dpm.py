@@ -75,14 +75,14 @@ class FullDPM(nn.Module):
         # p_0=p_0.unsqueeze(0) # N,L,3 , N=1
         # c_0=c_0.unsqueeze(0) # N,L,20
         # v_0=v_0.unsqueeze(0) # N,L,3
-
+    
 
         N, L = p_0.shape[:2]
 
         if t == None:
             t = torch.randint(0, self.num_steps, (N,), dtype=torch.long, device=self._dummy.device)
 
-        mask_generate = torch.full((N,L), True, dtype=torch.bool) #or 0s?
+        mask_generate = torch.full((N,L), True, dtype=torch.bool, device = p_0.device) #or 0s?
 
         # Normalize positions
         p_0 = self._normalize_position(p_0)

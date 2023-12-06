@@ -1,0 +1,6 @@
+  - tqdm
+  - easydict
+  - tensorboard
+  - pytorch
+  - torch_geometric
+  - graphein

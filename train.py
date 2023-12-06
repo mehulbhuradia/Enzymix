@@ -3,6 +3,7 @@ import shutil
 import argparse
 import torch
 import torch.utils.tensorboard
+# tensorboard --logdir D:\Thesis\Enzymix\logs\   
 from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
@@ -21,7 +22,7 @@ if __name__ == '__main__':
     parser.add_argument('config', type=str)
     parser.add_argument('--logdir', type=str, default='./logs')
     parser.add_argument('--debug', action='store_true', default=False)
-    parser.add_argument('--device', type=str, default='cpu')
+    parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--resume', type=str, default=None)
@@ -54,10 +55,9 @@ if __name__ == '__main__':
     # Data
     logger.info('Loading dataset...')
     dataset = ProtienStructuresDataset()
-    train_size = int(0.85 * len(dataset))
+    train_size = int(0.9 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
-
     train_loader = DataLoader(
         train_dataset, 
         batch_size=1,  
@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     # Model
     logger.info('Building model...')
-    model = FullDPM()
+    model = FullDPM().to(args.device)
     logger.info('Number of parameters: %d' % count_parameters(model))
 
     # Optimizer & scheduler
@@ -92,12 +92,11 @@ if __name__ == '__main__':
 
     # Train
     def train(it):
-        time_start = current_milli_time()
+        
         model.train()
         
-        # Tensorboard
-        running_loss = 0.0
-        for i,x in enumerate(tqdm(train_loader, desc='Training Iter: '+str(it), dynamic_ncols=True)):
+        for i,x in enumerate(tqdm(train_loader, desc='Training Epoch: '+str(it), dynamic_ncols=True)):
+            time_start = current_milli_time()
             x = recursive_to(x, args.device)
 
             # Forward
@@ -107,6 +106,8 @@ if __name__ == '__main__':
             loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
             loss_dict['overall'] = loss
             time_forward_end = current_milli_time()
+
+
             if not torch.isfinite(loss):
                 logger.error('NaN or Inf detected.')
                 torch.save({
@@ -121,26 +122,22 @@ if __name__ == '__main__':
             
             # Backward
             loss.backward()
-            running_loss += loss.item()
+            time_backward_end = current_milli_time()
+            # Logging
+            log_losses(loss_dict, ((it-1) * len(train_loader) + i), 'train', logger, writer, others={
+                # 'grad': orig_grad_norm,
+                'lr': optimizer.param_groups[0]['lr'],
+                'time_forward': (time_forward_end - time_start) / 1000,
+                'time_backward': (time_backward_end - time_forward_end) / 1000,
+            })
             if i % config.train.batch_size == 0 or i == len(train_loader) - 1:
                 # no gradent clipping
                 # orig_grad_norm = clip_grad_norm_(model.parameters(), config.train.max_grad_norm)
                 optimizer.step()
                 optimizer.zero_grad()
-                time_backward_end = current_milli_time()
+                
+                
 
-                # Logging
-                log_losses(loss_dict, it, 'train', logger, writer, others={
-                    'grad': orig_grad_norm,
-                    'lr': optimizer.param_groups[0]['lr'],
-                    'time_forward': (time_forward_end - time_start) / 1000,
-                    'time_backward': (time_backward_end - time_forward_end) / 1000,
-                })
-                # Tensorboard
-                writer.add_scalar('training loss',
-                            running_loss / 16,
-                            it * len(trainloader) + i)
-                running_loss = 0.0
                 
 
     # Validate
@@ -167,7 +164,7 @@ if __name__ == '__main__':
         return avg_loss
 
     try:
-        for it in range(it_first, config.train.max_iters + 1):
+        for it in range(it_first, config.train.max_epochs + 1):
             train(it)
             if it % config.train.val_freq == 0:
                 avg_val_loss = validate(it)
