@@ -26,7 +26,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--resume', type=str, default=None)
-    parser.add_argument('--finetune', type=str, default=None)
+
     args = parser.parse_args()
 
     # Load configs
@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
     # Data
     logger.info('Loading dataset...')
-    dataset = ProtienStructuresDataset()
+    dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len)
     train_size = int(0.9 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
@@ -67,9 +67,17 @@ if __name__ == '__main__':
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=args.num_workers)
     logger.info('Train %d | Val %d' % (len(train_dataset), len(val_dataset)))
 
+    # Check if CUDA (GPU support) is available
+    if torch.cuda.is_available():
+        # Get the number of available GPUs
+        num_gpus = torch.cuda.device_count()
+        logger.info(f"GPU is available with {num_gpus} {'GPU' if num_gpus == 1 else 'GPUs'}")
+    else:
+        logger.info("No GPU available, using CPU.")
+
     # Model
     logger.info('Building model...')
-    model = FullDPM().to(args.device)
+    model = FullDPM(n_layers=config.train.num_layers).to(args.device)
     logger.info('Number of parameters: %d' % count_parameters(model))
 
     # Optimizer & scheduler
@@ -79,8 +87,8 @@ if __name__ == '__main__':
     it_first = 1
 
     # Resume
-    if args.resume is not None or args.finetune is not None:
-        ckpt_path = args.resume if args.resume is not None else args.finetune
+    if args.resume is not None:
+        ckpt_path = args.resume
         logger.info('Resuming from checkpoint: %s' % ckpt_path)
         ckpt = torch.load(ckpt_path, map_location=args.device)
         it_first = ckpt['iteration']  # + 1
@@ -94,7 +102,15 @@ if __name__ == '__main__':
     def train(it):
         
         model.train()
-        
+        avg_loss = {}
+        avg_loss['overall'] = 0
+        avg_loss['rot'] = 0
+        avg_loss['pos'] = 0
+        avg_loss['seq'] = 0
+        avg_forward_time = 0
+        avg_backward_time = 0
+        number_of_samples = len(train_loader)
+
         for i,x in enumerate(tqdm(train_loader, desc='Training Epoch: '+str(it), dynamic_ncols=True)):
             time_start = current_milli_time()
             x = recursive_to(x, args.device)
@@ -123,51 +139,89 @@ if __name__ == '__main__':
             # Backward
             loss.backward()
             time_backward_end = current_milli_time()
-            # Logging
-            log_losses(loss_dict, ((it-1) * len(train_loader) + i), 'train', logger, writer, others={
-                # 'grad': orig_grad_norm,
-                'lr': optimizer.param_groups[0]['lr'],
-                'time_forward': (time_forward_end - time_start) / 1000,
-                'time_backward': (time_backward_end - time_forward_end) / 1000,
-            })
+
+            avg_loss['overall'] += loss_dict['overall']
+            avg_loss['rot'] += loss_dict['rot']
+            avg_loss['pos'] += loss_dict['pos']
+            avg_loss['seq'] += loss_dict['seq']
+
+            avg_forward_time += (time_forward_end - time_start)
+            avg_backward_time += (time_backward_end - time_forward_end)
+
             if i % config.train.batch_size == 0 or i == len(train_loader) - 1:
                 # no gradent clipping
                 # orig_grad_norm = clip_grad_norm_(model.parameters(), config.train.max_grad_norm)
                 optimizer.step()
                 optimizer.zero_grad()
-                
-                
+            
+        avg_loss['overall'] /= number_of_samples
+        avg_loss['rot'] /= number_of_samples
+        avg_loss['pos'] /= number_of_samples
+        avg_loss['seq'] /= number_of_samples
+        avg_forward_time /= number_of_samples
+        avg_backward_time /= number_of_samples
 
-                
+        return avg_loss, avg_forward_time, avg_backward_time
 
     # Validate
     def validate(it):
         loss_tape = ValidationLossTape()
+        avg_loss = {}
+        avg_loss['overall'] = 0
+        avg_loss['rot'] = 0
+        avg_loss['pos'] = 0
+        avg_loss['seq'] = 0
+        number_of_samples = len(val_loader)
         with torch.no_grad():
             model.eval()
-            for i,x in enumerate(tqdm(val_loader, desc='Validate', dynamic_ncols=True)):
+            for x in tqdm(val_loader, desc='Validate', dynamic_ncols=True):
                 # Prepare data
                 x = recursive_to(x, args.device)
                 # Forward
                 loss_dict = model(x[0], x[1], x[2], x[3])
                 loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
                 loss_dict['overall'] = loss
-
-                loss_tape.update(loss_dict, 1)
-
-        avg_loss = loss_tape.log(it, logger, writer, 'val')
+                # Accumulate
+                avg_loss['overall'] += loss_dict['overall']
+                avg_loss['rot'] += loss_dict['rot']
+                avg_loss['pos'] += loss_dict['pos']
+                avg_loss['seq'] += loss_dict['seq']
+        
         # Trigger scheduler
         if config.train.scheduler.type == 'plateau':
-            scheduler.step(avg_loss)
+            scheduler.step(avg_loss['overall'])
         else:
             scheduler.step()
+
+        avg_loss['overall'] /= number_of_samples
+        avg_loss['rot'] /= number_of_samples
+        avg_loss['pos'] /= number_of_samples
+        avg_loss['seq'] /= number_of_samples
+
         return avg_loss
 
+    # Main training loop
     try:
+        # Set up early stopping
+        early_stopping = {'counter': 0, 'best_loss': float('inf')}
+        max_patience = config.train.early_stop_patience
+
         for it in range(it_first, config.train.max_epochs + 1):
-            train(it)
+            
+            loss_dict, time_forward, time_backward = train(it)
+
+            # Logging
+            log_losses(loss_dict, it, 'train', logger, writer, others={
+                # 'grad': orig_grad_norm,
+                'lr': optimizer.param_groups[0]['lr'],
+                'avg_time_forward': (time_forward) / 1000,
+                'avg_time_backward': (time_backward) / 1000,
+            })
+
             if it % config.train.val_freq == 0:
                 avg_val_loss = validate(it)
+                # Logging
+                log_losses(avg_val_loss, it, 'val', logger, writer)  
                 if not args.debug:
                     ckpt_path = os.path.join(ckpt_dir, '%d.pt' % it)
                     torch.save({
@@ -176,7 +230,18 @@ if __name__ == '__main__':
                         'optimizer': optimizer.state_dict(),
                         'scheduler': scheduler.state_dict(),
                         'iteration': it,
-                        'avg_val_loss': avg_val_loss,
+                        'avg_val_loss': avg_val_loss['overall'],
                     }, ckpt_path)
+            
+                # Check for early stopping
+                if avg_val_loss['overall'] < early_stopping['best_loss']:
+                    early_stopping['best_loss'] = avg_val_loss['overall']
+                    early_stopping['counter'] = 0
+                else:
+                    early_stopping['counter'] += 1
+                    if early_stopping['counter'] >= max_patience:
+                        logger.info("Early stopping triggered")
+                        break
+    
     except KeyboardInterrupt:
         logger.info('Terminating...')

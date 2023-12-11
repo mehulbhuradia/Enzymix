@@ -34,10 +34,10 @@ class FullDPM(nn.Module):
     def __init__(
         self, 
         in_node_nf =26, 
-        hidden_nf=23,
+        hidden_nf=26,
         out_node_nf=23,
         num_steps=100, 
-        eps_net_opt={"attention":True, "normalize":True,"n_layers":4}, 
+        n_layers=4, 
         trans_rot_opt={}, 
         trans_pos_opt={}, 
         trans_seq_opt={},
@@ -45,6 +45,7 @@ class FullDPM(nn.Module):
         position_scale=[10.0],
     ):
         super().__init__()
+        eps_net_opt={"attention":True, "normalize":True,"n_layers":n_layers}
         self.eps_net = eg.EGNN(in_node_nf=in_node_nf, hidden_nf=hidden_nf, out_node_nf=out_node_nf, **eps_net_opt)
         self.num_steps = num_steps
         self.trans_rot = RotationTransition(num_steps, **trans_rot_opt)
@@ -86,6 +87,15 @@ class FullDPM(nn.Module):
 
         # Normalize positions
         p_0 = self._normalize_position(p_0)
+
+        #          As the coordinate deviation are
+        # calculated in the local frame, we left-multiply it by the orientation matrix and transform it back to the
+        # global frame [28]. Formally, this can be expressed as ϵˆj = Ot
+        # j MLPG (hj ). Predicting coordinate
+        # deviations in the local frame and projecting it to the global frame ensures the equivariance of the
+        # prediction [28], as when the entire 3D structure rotates by a particular angle, the coordinate deviations
+        # also rotates the same angle.
+        # local_to_global
 
         # Add noise to rotation
         R_0 = so3vec_to_rotation(v_0)
