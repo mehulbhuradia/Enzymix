@@ -12,7 +12,7 @@
 module use /opt/insy/modulefiles
 module load cuda/12.2 cudnn/12-8.9.1.23 # Load certain versions of cuda and cudnn 
 
-pip install torch torchvision torchaudio
-pip install tqdm easydict tensorboard torch_geometric graphein
+pip3 install torch torchvision torchaudio
+pip3 install tqdm easydict tensorboard torch_geometric graphein
 
 srun python train.py train_dummy.yml
