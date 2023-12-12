@@ -9,10 +9,9 @@
 #SBATCH --mail-type=END     
 #SBATCH --gres=gpu
 
-module use ../../opt/insy/modulefiles
-module load cuda/12.2 cudnn/12-8.9.1.23 # Load certain versions of cuda and cudnn 
+module use /opt/insy/modulefiles
+module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
-pip install torch torchvision torchaudio
-pip install tqdm easydict tensorboard torch_geometric graphein
+conda activate Enzymix
 
 srun python train.py train.yml

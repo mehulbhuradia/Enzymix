@@ -10,14 +10,8 @@
 #SBATCH --gres=gpu
 
 module use /opt/insy/modulefiles
-module load miniconda/3.10
-module load cuda/12.2 cudnn/12-8.9.1.23 # Load certain versions of cuda and cudnn 
-
-conda create -n Enzymix python=3.10
+module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate Enzymix
-
-pip3 install torch torchvision torchaudio
-pip3 install tqdm easydict tensorboard torch_geometric graphein
 
 srun python train.py train_dummy.yml

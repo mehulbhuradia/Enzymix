@@ -137,10 +137,10 @@ class FullDPM(nn.Module):
 
         v_noisy = v_noisy.unsqueeze(0) # 1,L,3
         p_noisy = p_noisy.unsqueeze(0) # 1,L,3
-        p_pred = p_pred.unsqueeze(0) # 1,L,3
+        # p_pred = p_pred.unsqueeze(0) # 1,L,3
 
         # from protdiff
-        eps_p_pred = p_pred - p_noisy
+        # eps_p_pred = p_pred - p_noisy
 
         # New orientation
         U = quaternion_1ijk_to_rotation_matrix(eps_rot) # (N, L, 3, 3)
@@ -154,8 +154,8 @@ class FullDPM(nn.Module):
         loss_dict['rot'] = loss_rot
 
         # Position loss
-        loss_pos = F.mse_loss(eps_p_pred, eps_p, reduction='none').sum(dim=-1)  # (N, L)
-        # loss_pos = F.mse_loss(p_pred, p_0, reduction='none').sum(dim=-1)  # (N, L)
+        # loss_pos = F.mse_loss(eps_p_pred, eps_p, reduction='none').sum(dim=-1)  # (N, L)
+        loss_pos = F.mse_loss(p_pred, p_0, reduction='none').sum(dim=-1)  # (N, L)
         loss_pos = (loss_pos * mask_generate).sum() / (mask_generate.sum().float() + 1e-8)
         loss_dict['pos'] = loss_pos
 
