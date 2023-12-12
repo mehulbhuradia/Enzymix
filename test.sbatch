@@ -9,7 +9,7 @@
 #SBATCH --mail-type=END     
 #SBATCH --gres=gpu
 
-module use ../../opt/insy/modulefiles
+module use /opt/insy/modulefiles
 module load cuda/12.2 cudnn/12-8.9.1.23 # Load certain versions of cuda and cudnn 
 
 pip install torch torchvision torchaudio
