@@ -8,7 +8,7 @@ train:
   batch_size: 16
   seed: 2022
   max_len: 100
-  path: ./../../../tmp/mbhuradia/processed_500
+  path: /tmp/mbhuradia/processed_500
   num_layers: 2
   early_stop_patience: 10
   max_grad_norm: 100.0
