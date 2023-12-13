@@ -10,7 +10,10 @@ conda create -n Enzymix
 
 conda activate Enzymix
 
+<!-- all the required packages -->
 pip3 install tqdm easydict tensorboard torch_geometric --no-cache-dir
 
 conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+
+conda install packaging
 

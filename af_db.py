@@ -11,7 +11,7 @@ class ProtienStructuresDataset(Dataset):
         for pdb in os.listdir(path):
           length=pdb.split('_')[2].split('.')[0]
           if int(length) <= max_len:
-            self.paths.append('./processed/' + pdb)
+            self.paths.append(path + pdb)
 
     def __len__(self):
         return len(self.paths)
