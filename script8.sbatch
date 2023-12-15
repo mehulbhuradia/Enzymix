@@ -1,8 +1,8 @@
 #!/bin/sh
 #SBATCH --partition=general # Request partition. Default is 'general' 
 #SBATCH --job-name=Enzymix
-#SBATCH --qos=medium         
-#SBATCH --time=48:00:00      
+#SBATCH --qos=long         
+#SBATCH --time=96:00:00      
 #SBATCH --ntasks=1         
 #SBATCH --cpus-per-task=2   
 #SBATCH --mem-per-cpu=32G
