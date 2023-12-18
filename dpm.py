@@ -33,8 +33,8 @@ class FullDPM(nn.Module):
 
     def __init__(
         self, 
-        in_node_nf =26, 
-        hidden_nf=26,
+        in_node_nf =35, 
+        hidden_nf=32,
         out_node_nf=23,
         num_steps=100, 
         n_layers=4, 
@@ -43,6 +43,7 @@ class FullDPM(nn.Module):
         trans_seq_opt={},
         position_mean=[0.0, 0.0, 0.0],
         position_scale=[10.0],
+        res_feat_dim=32,
     ):
         super().__init__()
         eps_net_opt={"attention":True, "normalize":True,"n_layers":n_layers}
@@ -51,7 +52,15 @@ class FullDPM(nn.Module):
         self.trans_rot = RotationTransition(num_steps, **trans_rot_opt)
         self.trans_pos = PositionTransition(num_steps, **trans_pos_opt)
         self.trans_seq = AminoacidCategoricalTransition(num_steps, **trans_seq_opt)
-
+        
+        self.aatype_embed = nn.Embedding(20, res_feat_dim)
+        self.res_feat_mixer = nn.Sequential(
+            nn.Linear(res_feat_dim +3 , res_feat_dim * 2), nn.ReLU(),
+            nn.Linear(res_feat_dim * 2 , res_feat_dim), nn.ReLU(),
+            nn.Linear(res_feat_dim, res_feat_dim), nn.ReLU(),
+            nn.Linear(res_feat_dim, res_feat_dim),
+        )
+        
         self.register_buffer('position_mean', torch.FloatTensor(position_mean).view(1, 1, -1))
         self.register_buffer('position_scale', torch.FloatTensor(position_scale).view(1, 1, -1))
         self.register_buffer('_dummy', torch.empty([0, ]))
@@ -120,8 +129,12 @@ class FullDPM(nn.Module):
         v_0=v_0.squeeze(0) # L,3
     
         t_embed = torch.stack([beta, torch.sin(beta), torch.cos(beta)], dim=-1)[:, None, :].squeeze(0).expand(L, 3) # (L, 3)
-            
-        in_feat=torch.cat((c_noisy, v_noisy, t_embed), dim=1) # (L x 26)
+
+        aa_feat = self.aatype_embed(s_noisy.squeeze(0))
+
+        res_feat = self.res_feat_mixer(torch.cat([v_noisy, aa_feat], dim=-1)) # [Important] Incorporate sequence at the current step. (L, 32) <- (L, 32) + (L, 3)
+        
+        in_feat=torch.cat((res_feat, t_embed), dim=1) # (L x 35)
 
         pred_node_feat , p_pred = self.eps_net(h=in_feat, x=p_noisy, edges=edges, edge_attr=None) #(L x 23), (L x 3)
         
