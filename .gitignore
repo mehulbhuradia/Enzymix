@@ -2,5 +2,6 @@ __pycache__/
 af_structures/
 processed/
 processed_500/
+processed_big_atoms/
 logs/
 thesis/
