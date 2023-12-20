@@ -23,10 +23,18 @@ class E_GCL(nn.Module):
             nn.Linear(input_edge + edge_coords_nf + edges_in_d, hidden_nf),
             act_fn,
             nn.Linear(hidden_nf, hidden_nf),
+            act_fn,
+            nn.Linear(hidden_nf, hidden_nf),
+            act_fn,
+            nn.Linear(hidden_nf, hidden_nf),
             act_fn)
 
         self.node_mlp = nn.Sequential(
             nn.Linear(hidden_nf + input_nf, hidden_nf),
+            act_fn,
+            nn.Linear(hidden_nf, hidden_nf),
+            act_fn,
+            nn.Linear(hidden_nf, hidden_nf),
             act_fn,
             nn.Linear(hidden_nf, output_nf))
 
@@ -34,6 +42,10 @@ class E_GCL(nn.Module):
         torch.nn.init.xavier_uniform_(layer.weight, gain=0.001)
 
         coord_mlp = []
+        coord_mlp.append(nn.Linear(hidden_nf, hidden_nf))
+        coord_mlp.append(act_fn)
+        coord_mlp.append(nn.Linear(hidden_nf, hidden_nf))
+        coord_mlp.append(act_fn)
         coord_mlp.append(nn.Linear(hidden_nf, hidden_nf))
         coord_mlp.append(act_fn)
         coord_mlp.append(layer)
@@ -208,4 +220,3 @@ if __name__ == "__main__":
 
     # Run EGNN
     h, x = egnn(h, x, edges, edge_attr)
-
