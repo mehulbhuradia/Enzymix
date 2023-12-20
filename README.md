@@ -2,6 +2,11 @@
 #file transfer
 scp -r processed_500 daic:~/Enzymix/
 
+
+<!-- diffab data -->
+scp -r all_structures daic:/tudelft.net/staff-umbrella/Enzymix/diffab/data/
+
+
 #setup
 module use /opt/insy/modulefiles
 module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
@@ -15,6 +20,11 @@ conda activate Enzymix
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
 cd /tudelft.net/staff-umbrella/Enzymix/Enzymix/
+
+<!-- download log files -->
+scp -r daic:/tudelft.net/staff-umbrella/Enzymix/Enzymix/logs/ ./
+
+# tensorboard --logdir D:\Thesis\Enzymix\logs\   
 
 <!-- cuz limited space -->
 conda config --add pkgs_dirs /tmp/
