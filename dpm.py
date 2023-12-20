@@ -140,7 +140,7 @@ class FullDPM(nn.Module):
         p_pred = p_pred.unsqueeze(0) # 1,L,3
 
         # from protdiff
-        eps_p_pred =  (p_noisy - a0*p_pred)/a1 # (1, L, 3)
+        eps_p_pred =  (p_noisy - a0*p_pred)/(a1+ 1e-8) # (1, L, 3)
 
         # New orientation
         U = quaternion_1ijk_to_rotation_matrix(eps_rot) # (N, L, 3, 3)
