@@ -103,7 +103,7 @@ class FullDPM(nn.Module):
         R_noisy = so3vec_to_rotation(v_noisy) # (N, L, 3, 3)
 
         # Add noise to positions
-        p_noisy, eps_p = self.trans_pos.add_noise(p_0, mask_generate, t)
+        p_noisy, eps_p, a0, a1 = self.trans_pos.add_noise(p_0, mask_generate, t)
     
         # Add noise to sequence
         s_0=self.trans_seq._sample(c_0) # c_0 should be N,L,20
@@ -140,7 +140,7 @@ class FullDPM(nn.Module):
         p_pred = p_pred.unsqueeze(0) # 1,L,3
 
         # from protdiff
-        eps_p_pred = p_pred - p_noisy
+        eps_p_pred =  (p_noisy - a0*p_pred)/a1 # (1, L, 3)
 
         # New orientation
         U = quaternion_1ijk_to_rotation_matrix(eps_rot) # (N, L, 3, 3)

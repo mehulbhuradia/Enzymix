@@ -53,7 +53,7 @@ class PositionTransition(nn.Module):
         p_noisy = c0*p_0 + c1*e_rand
         p_noisy = torch.where(mask_generate[..., None].expand_as(p_0), p_noisy, p_0)
 
-        return p_noisy, e_rand
+        return p_noisy, e_rand, c0, c1
 
     def denoise(self, p_t, eps_p, mask_generate, t):
         # IMPORTANT:
