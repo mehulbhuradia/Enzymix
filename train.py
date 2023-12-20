@@ -26,6 +26,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--resume', type=str, default=None)
+    parser.add_argument('--name', type=str, default="")
 
     args = parser.parse_args()
 
@@ -41,7 +42,7 @@ if __name__ == '__main__':
         if args.resume:
             log_dir = os.path.dirname(os.path.dirname(args.resume))
         else:
-            log_dir = get_new_log_dir(args.logdir, prefix=config_name, tag=args.tag)
+            log_dir = get_new_log_dir(args.logdir, prefix=config_name, tag=args.tag) + args.name
         ckpt_dir = os.path.join(log_dir, 'checkpoints')
         if not os.path.exists(ckpt_dir): os.makedirs(ckpt_dir)
         logger = get_logger('train', log_dir)
@@ -222,21 +223,21 @@ if __name__ == '__main__':
                 avg_val_loss = validate(it)
                 # Logging
                 log_losses(avg_val_loss, it, 'val', logger, writer)  
-                if not args.debug:
-                    ckpt_path = os.path.join(ckpt_dir, '%d.pt' % it)
-                    torch.save({
-                        'config': config,
-                        'model': model.state_dict(),
-                        'optimizer': optimizer.state_dict(),
-                        'scheduler': scheduler.state_dict(),
-                        'iteration': it,
-                        'avg_val_loss': avg_val_loss['overall'],
-                    }, ckpt_path)
-            
+                
                 # Check for early stopping
                 if avg_val_loss['overall'] < early_stopping['best_loss']:
                     early_stopping['best_loss'] = avg_val_loss['overall']
                     early_stopping['counter'] = 0
+                    if not args.debug:
+                        ckpt_path = os.path.join(ckpt_dir, '%d.pt' % it)
+                        torch.save({
+                            'config': config,
+                            'model': model.state_dict(),
+                            'optimizer': optimizer.state_dict(),
+                            'scheduler': scheduler.state_dict(),
+                            'iteration': it,
+                            'avg_val_loss': avg_val_loss['overall'],
+                        }, ckpt_path)
                 else:
                     early_stopping['counter'] += 1
                     if early_stopping['counter'] >= max_patience:

@@ -3,7 +3,7 @@ train:
     rot: 1.0
     pos: 1.2
     seq: 0.2
-  max_epochs: 1000
+  max_epochs: 10000
   val_freq: 5
   batch_size: 4
   seed: 2022
