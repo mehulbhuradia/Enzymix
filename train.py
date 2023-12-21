@@ -105,7 +105,7 @@ if __name__ == '__main__':
         model.train()
         avg_loss = {}
         avg_loss['overall'] = 0
-        avg_loss['rot'] = 0
+        # avg_loss['rot'] = 0
         avg_loss['pos'] = 0
         avg_loss['seq'] = 0
         avg_forward_time = 0
@@ -142,7 +142,7 @@ if __name__ == '__main__':
             time_backward_end = current_milli_time()
 
             avg_loss['overall'] += loss_dict['overall']
-            avg_loss['rot'] += loss_dict['rot']
+            # avg_loss['rot'] += loss_dict['rot']
             avg_loss['pos'] += loss_dict['pos']
             avg_loss['seq'] += loss_dict['seq']
 
@@ -156,7 +156,7 @@ if __name__ == '__main__':
                 optimizer.zero_grad()
             
         avg_loss['overall'] /= number_of_samples
-        avg_loss['rot'] /= number_of_samples
+        # avg_loss['rot'] /= number_of_samples
         avg_loss['pos'] /= number_of_samples
         avg_loss['seq'] /= number_of_samples
         avg_forward_time /= number_of_samples
@@ -169,7 +169,7 @@ if __name__ == '__main__':
         loss_tape = ValidationLossTape()
         avg_loss = {}
         avg_loss['overall'] = 0
-        avg_loss['rot'] = 0
+        # avg_loss['rot'] = 0
         avg_loss['pos'] = 0
         avg_loss['seq'] = 0
         number_of_samples = len(val_loader)
@@ -184,7 +184,7 @@ if __name__ == '__main__':
                 loss_dict['overall'] = loss
                 # Accumulate
                 avg_loss['overall'] += loss_dict['overall']
-                avg_loss['rot'] += loss_dict['rot']
+                # avg_loss['rot'] += loss_dict['rot']
                 avg_loss['pos'] += loss_dict['pos']
                 avg_loss['seq'] += loss_dict['seq']
         
@@ -195,7 +195,7 @@ if __name__ == '__main__':
             scheduler.step()
 
         avg_loss['overall'] /= number_of_samples
-        avg_loss['rot'] /= number_of_samples
+        # avg_loss['rot'] /= number_of_samples
         avg_loss['pos'] /= number_of_samples
         avg_loss['seq'] /= number_of_samples
 
