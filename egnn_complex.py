@@ -73,7 +73,7 @@ class E_GCL(nn.Module):
     def coord_model(self, coord, edge_index, coord_diff, edge_feat):
         row, col = edge_index
         phi_x=self.coord_mlp(edge_feat)
-        phi_x = phi_x.view(phi_x.shape[0],x_dim,x_dim)
+        phi_x = phi_x.view(phi_x.shape[0],self.x_dim,self.x_dim)
         coord_diff = coord_diff.unsqueeze(1)
         trans = torch.bmm(coord_diff,phi_x).squeeze(1)
         if self.coords_agg == 'sum':
