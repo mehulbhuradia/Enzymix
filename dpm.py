@@ -2,31 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from diffab.modules.common.geometry import apply_rotation_to_vector, quaternion_1ijk_to_rotation_matrix
-from diffab.modules.common.so3 import so3vec_to_rotation, rotation_to_so3vec, random_uniform_so3
-from diffab.modules.diffusion.transition import RotationTransition, PositionTransition, AminoacidCategoricalTransition
+from diffab.modules.diffusion.transition import PositionTransition, AminoacidCategoricalTransition
 
 import egnn_complex as eg
-
-
-def rotation_matrix_cosine_loss(R_pred, R_true):
-    """
-    Args:
-        R_pred: (*, 3, 3).
-        R_true: (*, 3, 3).
-    Returns:
-        Per-matrix losses, (*, ).
-    """
-    size = list(R_pred.shape[:-2])
-    ncol = R_pred.numel() // 3
-
-    RT_pred = R_pred.transpose(-2, -1).reshape(ncol, 3) # (ncol, 3)
-    RT_true = R_true.transpose(-2, -1).reshape(ncol, 3) # (ncol, 3)
-
-    ones = torch.ones([ncol, ], dtype=torch.long, device=R_pred.device)
-    loss = F.cosine_embedding_loss(RT_pred, RT_true, ones, reduction='none')  # (ncol*3, )
-    loss = loss.reshape(size + [3]).sum(dim=-1)    # (*, )
-    return loss
 
 
 class FullDPM(nn.Module):
@@ -39,7 +17,7 @@ class FullDPM(nn.Module):
         num_steps=100, 
         n_layers=4, 
         x_dim =9,
-        trans_rot_opt={}, 
+        
         trans_pos_opt={}, 
         trans_seq_opt={},
         position_scale=[10.0],
@@ -48,7 +26,7 @@ class FullDPM(nn.Module):
         eps_net_opt={"attention":True, "normalize":True,"n_layers":n_layers}
         self.eps_net = eg.EGNN(in_node_nf=in_node_nf, hidden_nf=hidden_nf, out_node_nf=out_node_nf,x_dim=x_dim, **eps_net_opt)
         self.num_steps = num_steps
-        self.trans_rot = RotationTransition(num_steps, **trans_rot_opt)
+
         self.trans_pos = PositionTransition(num_steps, **trans_pos_opt)
         self.trans_seq = AminoacidCategoricalTransition(num_steps, **trans_seq_opt)
 
