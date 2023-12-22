@@ -6,7 +6,7 @@ from diffab.modules.common.geometry import apply_rotation_to_vector, quaternion_
 from diffab.modules.common.so3 import so3vec_to_rotation, rotation_to_so3vec, random_uniform_so3
 from diffab.modules.diffusion.transition import RotationTransition, PositionTransition, AminoacidCategoricalTransition
 
-import egnn_clean as eg
+import egnn_complex as eg
 
 
 def rotation_matrix_cosine_loss(R_pred, R_true):
@@ -38,6 +38,7 @@ class FullDPM(nn.Module):
         out_node_nf=23,
         num_steps=100, 
         n_layers=4, 
+        x_dim =9,
         trans_rot_opt={}, 
         trans_pos_opt={}, 
         trans_seq_opt={},
@@ -45,7 +46,7 @@ class FullDPM(nn.Module):
     ):
         super().__init__()
         eps_net_opt={"attention":True, "normalize":True,"n_layers":n_layers}
-        self.eps_net = eg.EGNN(in_node_nf=in_node_nf, hidden_nf=hidden_nf, out_node_nf=out_node_nf, **eps_net_opt)
+        self.eps_net = eg.EGNN(in_node_nf=in_node_nf, hidden_nf=hidden_nf, out_node_nf=out_node_nf,x_dim=x_dim, **eps_net_opt)
         self.num_steps = num_steps
         self.trans_rot = RotationTransition(num_steps, **trans_rot_opt)
         self.trans_pos = PositionTransition(num_steps, **trans_pos_opt)
