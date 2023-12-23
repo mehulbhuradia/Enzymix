@@ -6,6 +6,7 @@ scp -r processed_500 daic:~/Enzymix/
 <!-- diffab data -->
 scp -r all_structures daic:/tudelft.net/staff-umbrella/Enzymix/diffab/data/
 
+scp -r processed_big_atoms daic:/tudelft.net/staff-umbrella/Enzymix/Enzymix/
 
 #setup
 module use /opt/insy/modulefiles
