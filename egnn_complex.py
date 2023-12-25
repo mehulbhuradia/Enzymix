@@ -24,26 +24,44 @@ class E_GCL(nn.Module):
             nn.Linear(input_edge + edge_coords_nf + edges_in_d, hidden_nf),
             act_fn,
             nn.Linear(hidden_nf, hidden_nf),
+            act_fn,
+            nn.Linear(hidden_nf, hidden_nf),
+            act_fn,
+            nn.Linear(hidden_nf, hidden_nf),
             act_fn)
 
         self.node_mlp = nn.Sequential(
             nn.Linear(hidden_nf + input_nf, hidden_nf),
             act_fn,
+            nn.Linear(hidden_nf, hidden_nf),
+            act_fn,
+            nn.Linear(hidden_nf, hidden_nf),
+            act_fn,
             nn.Linear(hidden_nf, output_nf))
 
-        layer = nn.Linear(hidden_nf, x_dim*x_dim, bias=False)
-        torch.nn.init.xavier_uniform_(layer.weight, gain=0.001)
+        layer = nn.Linear(hidden_nf, hidden_nf)
+        layer2 = nn.Linear(hidden_nf, hidden_nf)
+        layer3 = nn.Linear(hidden_nf, x_dim*x_dim)
+        # torch.nn.init.xavier_uniform_(layer.weight, gain=0.001)
 
         coord_mlp = []
         coord_mlp.append(nn.Linear(hidden_nf, hidden_nf))
         coord_mlp.append(act_fn)
         coord_mlp.append(layer)
+        coord_mlp.append(act_fn)
+        coord_mlp.append(layer2)
+        coord_mlp.append(act_fn)
+        coord_mlp.append(layer3)
         if self.tanh:
             coord_mlp.append(nn.Tanh())
         self.coord_mlp = nn.Sequential(*coord_mlp)
 
         if self.attention:
             self.att_mlp = nn.Sequential(
+                nn.Linear(hidden_nf, hidden_nf),
+                act_fn,
+                nn.Linear(hidden_nf, hidden_nf),
+                act_fn,
                 nn.Linear(hidden_nf, 1),
                 nn.Sigmoid())
 
