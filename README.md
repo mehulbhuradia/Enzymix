@@ -40,3 +40,11 @@ conda install pyg -c pyg
 conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 conda install packaging
 
+
+
+
+sbatch script.sbatch name layers addlayers
+
+eg:
+
+sbatch script.sbatch bigacomplex 2 4
