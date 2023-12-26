@@ -1,6 +1,6 @@
 #!/bin/sh
 #SBATCH --partition=general # Request partition. Default is 'general' 
-#SBATCH --job-name=Enzymix
+#SBATCH --job-name=Enzymix_$1_$2_$3
 #SBATCH --qos=long         
 #SBATCH --time=168:00:00      
 #SBATCH --ntasks=1         

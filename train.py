@@ -83,7 +83,9 @@ if __name__ == '__main__':
     logger.info('Building model...')
     model = FullDPM(n_layers=args.layers,additional_layers=args.add_layers).to(args.device)
     logger.info('Number of parameters: %d' % count_parameters(model))
-
+    logger.info('Number of EGCL layers: %d' % args.layers)
+    logger.info('Number of additional layers: %d' % args.add_layers)
+    logger.info('Name of  the run: %s' % args.name)
     # Optimizer & scheduler
     optimizer = get_optimizer(config.train.optimizer, model)
     scheduler = get_scheduler(config.train.scheduler, optimizer)
