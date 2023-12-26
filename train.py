@@ -136,7 +136,7 @@ if __name__ == '__main__':
                     'optimizer': optimizer.state_dict(),
                     'scheduler': scheduler.state_dict(),
                     'iteration': it,
-                    'batch': recursive_to(batch, 'cpu'),
+                    'batch': recursive_to(x, 'cpu'),
                 }, os.path.join(log_dir, 'checkpoint_nan_%d.pt' % it))
                 raise KeyboardInterrupt()
             
@@ -229,7 +229,7 @@ if __name__ == '__main__':
                 
                 # Check for early stopping
                 # if avg_val_loss['overall'] < early_stopping['best_loss']:
-                if avg_val_loss['pos'] < early_stopping['best_pos'] or avg_val_loss['best_seq'] < early_stopping['seq']:
+                if avg_val_loss['pos'] < early_stopping['best_pos'] or avg_val_loss['seq'] < early_stopping['best_seq']:
                     # early_stopping['best_loss'] = avg_val_loss['overall']
                     early_stopping['best_pos'] = avg_val_loss['pos']
                     early_stopping['best_seq'] = avg_val_loss['seq']
