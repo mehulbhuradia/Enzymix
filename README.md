@@ -48,3 +48,8 @@ sbatch script.sbatch name layers addlayers
 eg:
 
 sbatch script.sbatch bigacomplex 2 4
+
+
+squeue -u mbhuradia
+
+squeue -u mbhuradia -t RUNNING -h | wc -l
