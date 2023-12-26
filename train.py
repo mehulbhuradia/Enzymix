@@ -27,6 +27,9 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--resume', type=str, default=None)
     parser.add_argument('--name', type=str, default="")
+    parser.add_argument('--layers', type=int, default=2)
+    parser.add_argument('--add_layers', type=int, default=0)
+
 
     args = parser.parse_args()
 
@@ -78,7 +81,7 @@ if __name__ == '__main__':
 
     # Model
     logger.info('Building model...')
-    model = FullDPM(n_layers=config.train.num_layers).to(args.device)
+    model = FullDPM(n_layers=args.layers,additional_layers=args.add_layers).to(args.device)
     logger.info('Number of parameters: %d' % count_parameters(model))
 
     # Optimizer & scheduler
@@ -204,7 +207,7 @@ if __name__ == '__main__':
     # Main training loop
     try:
         # Set up early stopping
-        early_stopping = {'counter': 0, 'best_loss': float('inf')}
+        early_stopping = {'counter': 0, 'best_loss': float('inf'), 'best_pos': float('inf'), 'best_seq': float('inf')}
         max_patience = config.train.early_stop_patience
 
         for it in range(it_first, config.train.max_epochs + 1):
@@ -225,8 +228,11 @@ if __name__ == '__main__':
                 log_losses(avg_val_loss, it, 'val', logger, writer)  
                 
                 # Check for early stopping
-                if avg_val_loss['overall'] < early_stopping['best_loss']:
-                    early_stopping['best_loss'] = avg_val_loss['overall']
+                # if avg_val_loss['overall'] < early_stopping['best_loss']:
+                if avg_val_loss['pos'] < early_stopping['best_pos'] or avg_val_loss['best_seq'] < early_stopping['seq']:
+                    # early_stopping['best_loss'] = avg_val_loss['overall']
+                    early_stopping['best_pos'] = avg_val_loss['pos']
+                    early_stopping['best_seq'] = avg_val_loss['seq']
                     early_stopping['counter'] = 0
                     if not args.debug:
                         ckpt_path = os.path.join(ckpt_dir, '%d.pt' % it)

@@ -17,14 +17,14 @@ class FullDPM(nn.Module):
         num_steps=100, 
         n_layers=4, 
         x_dim =9,
-        
+        additional_layers=0,
         trans_pos_opt={}, 
         trans_seq_opt={},
         position_scale=[10.0],
     ):
         super().__init__()
-        eps_net_opt={"attention":True, "normalize":True,"n_layers":n_layers}
-        self.eps_net = eg.EGNN(in_node_nf=in_node_nf, hidden_nf=hidden_nf, out_node_nf=out_node_nf,x_dim=x_dim, **eps_net_opt)
+        
+        self.eps_net = eg.EGNN(in_node_nf=in_node_nf, hidden_nf=hidden_nf, out_node_nf=out_node_nf,x_dim=x_dim,attention=True,n_layers=n_layers,additional_layers=additional_layers)
         self.num_steps = num_steps
 
         self.trans_pos = PositionTransition(num_steps, **trans_pos_opt)

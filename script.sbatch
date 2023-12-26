@@ -2,7 +2,7 @@
 #SBATCH --partition=general # Request partition. Default is 'general' 
 #SBATCH --job-name=Enzymix
 #SBATCH --qos=long         
-#SBATCH --time=96:00:00      
+#SBATCH --time=168:00:00      
 #SBATCH --ntasks=1         
 #SBATCH --cpus-per-task=2   
 #SBATCH --mem-per-cpu=32G
@@ -14,4 +14,6 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
-srun python train.py train.yml --name biga6complexlayers
+logsname = "$1_$2_$3"
+
+srun python train.py train.yml --name $logsname --layers $2 --add_layers $3

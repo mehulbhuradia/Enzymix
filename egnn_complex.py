@@ -8,7 +8,7 @@ class E_GCL(nn.Module):
     re
     """
 
-    def __init__(self, input_nf, output_nf, hidden_nf, edges_in_d=0,x_dim=9, act_fn=nn.SiLU(), residual=True, attention=False, normalize=False, coords_agg='mean', tanh=False):
+    def __init__(self, input_nf, output_nf, hidden_nf, edges_in_d=0,x_dim=9, act_fn=nn.SiLU(), residual=True, attention=False, normalize=False, coords_agg='mean', tanh=False, additional_layers=0):
         super(E_GCL, self).__init__()
         input_edge = input_nf * 2
         self.residual = residual
@@ -19,51 +19,47 @@ class E_GCL(nn.Module):
         self.epsilon = 1e-8
         self.x_dim=x_dim
         edge_coords_nf = 1
+        
+        edge_mlp_layers = []
+        edge_mlp_layers.append(nn.Linear(input_edge + edge_coords_nf + edges_in_d, hidden_nf))
+        edge_mlp_layers.append(act_fn)
+        for i in range(additional_layers):
+            edge_mlp_layers.append(nn.Linear(hidden_nf, hidden_nf))
+            edge_mlp_layers.append(act_fn)
+        edge_mlp_layers.append(nn.Linear(hidden_nf, hidden_nf))
+        edge_mlp_layers.append(act_fn)
 
-        self.edge_mlp = nn.Sequential(
-            nn.Linear(input_edge + edge_coords_nf + edges_in_d, hidden_nf),
-            act_fn,
-            nn.Linear(hidden_nf, hidden_nf),
-            act_fn,
-            nn.Linear(hidden_nf, hidden_nf),
-            act_fn,
-            nn.Linear(hidden_nf, hidden_nf),
-            act_fn)
+        self.edge_mlp = nn.Sequential(*edge_mlp_layers)
 
-        self.node_mlp = nn.Sequential(
-            nn.Linear(hidden_nf + input_nf, hidden_nf),
-            act_fn,
-            nn.Linear(hidden_nf, hidden_nf),
-            act_fn,
-            nn.Linear(hidden_nf, hidden_nf),
-            act_fn,
-            nn.Linear(hidden_nf, output_nf))
+        node_mlp_layers = []
+        node_mlp_layers.append(nn.Linear(hidden_nf + input_nf, hidden_nf))
+        node_mlp_layers.append(act_fn)
+        for i in range(additional_layers):
+            node_mlp_layers.append(nn.Linear(hidden_nf, hidden_nf))
+            node_mlp_layers.append(act_fn)
+        node_mlp_layers.append(nn.Linear(hidden_nf, output_nf))
+        self.node_mlp = nn.Sequential(*node_mlp_layers)
 
-        layer = nn.Linear(hidden_nf, hidden_nf)
-        layer2 = nn.Linear(hidden_nf, hidden_nf)
-        layer3 = nn.Linear(hidden_nf, x_dim*x_dim)
-        # torch.nn.init.xavier_uniform_(layer.weight, gain=0.001)
-
-        coord_mlp = []
-        coord_mlp.append(nn.Linear(hidden_nf, hidden_nf))
-        coord_mlp.append(act_fn)
-        coord_mlp.append(layer)
-        coord_mlp.append(act_fn)
-        coord_mlp.append(layer2)
-        coord_mlp.append(act_fn)
-        coord_mlp.append(layer3)
+        coord_mlp_layers = []
+        coord_mlp_layers.append(nn.Linear(hidden_nf, hidden_nf))
+        coord_mlp_layers.append(act_fn)
+        for i in range(additional_layers):
+            coord_mlp_layers.append(nn.Linear(hidden_nf, hidden_nf))
+            coord_mlp_layers.append(act_fn)
+        coord_mlp_layers.append(nn.Linear(hidden_nf, x_dim*x_dim))
+        
         if self.tanh:
-            coord_mlp.append(nn.Tanh())
-        self.coord_mlp = nn.Sequential(*coord_mlp)
+            coord_mlp_layers.append(nn.Tanh())
+        self.coord_mlp = nn.Sequential(*coord_mlp_layers)
 
         if self.attention:
-            self.att_mlp = nn.Sequential(
-                nn.Linear(hidden_nf, hidden_nf),
-                act_fn,
-                nn.Linear(hidden_nf, hidden_nf),
-                act_fn,
-                nn.Linear(hidden_nf, 1),
-                nn.Sigmoid())
+            att_mlp_layers = []
+            for i in range(additional_layers):
+                att_mlp_layers.append(nn.Linear(hidden_nf, hidden_nf))
+                att_mlp_layers.append(act_fn)
+            att_mlp_layers.append(nn.Linear(hidden_nf, 1))
+            att_mlp_layers.append(nn.Sigmoid())
+            self.att_mlp = nn.Sequential(*att_mlp_layers)
 
     def edge_model(self, source, target, radial, edge_attr):
         if edge_attr is None:  # Unused.
@@ -126,7 +122,7 @@ class E_GCL(nn.Module):
 
 
 class EGNN(nn.Module):
-    def __init__(self, in_node_nf, hidden_nf, out_node_nf,x_dim=9, in_edge_nf=0, device='cpu', act_fn=nn.SiLU(), n_layers=4, residual=True, attention=False, normalize=False, tanh=False):
+    def __init__(self, in_node_nf, hidden_nf, out_node_nf,x_dim=9, in_edge_nf=0, device='cpu', act_fn=nn.SiLU(), n_layers=4, residual=True, attention=False, normalize=False, tanh=False,additional_layers=0):
         '''
 
         :param in_node_nf: Number of features for 'h' at the input
@@ -157,7 +153,7 @@ class EGNN(nn.Module):
         for i in range(0, n_layers):
             self.add_module("gcl_%d" % i, E_GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=in_edge_nf,x_dim=x_dim,
                                                 act_fn=act_fn, residual=residual, attention=attention,
-                                                normalize=normalize, tanh=tanh))
+                                                normalize=normalize, tanh=tanh,additional_layers=additional_layers))
         self.to(self.device)
 
     def forward(self, h, x, edges, edge_attr):
