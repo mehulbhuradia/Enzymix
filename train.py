@@ -45,8 +45,7 @@ if __name__ == '__main__':
         if args.resume:
             log_dir = os.path.dirname(os.path.dirname(args.resume))
         else:
-            log_dir = get_new_log_dir(args.logdir, prefix=config_name, tag=args.tag) + args.name +'_layers_'+str(args.layers)+'_add_layers_'+str(args.add_layers)
-        ckpt_dir = os.path.join(log_dir, 'checkpoints')
+            log_dir = args.name +'_layers_'+str(args.layers)+'_add_layers_'+str(args.add_layers) + get_new_log_dir(args.logdir, prefix=config_name, tag=args.tag)      ckpt_dir = os.path.join(log_dir, 'checkpoints')
         if not os.path.exists(ckpt_dir): os.makedirs(ckpt_dir)
         logger = get_logger('train', log_dir)
         writer = torch.utils.tensorboard.SummaryWriter(log_dir)
