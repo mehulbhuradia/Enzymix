@@ -12,6 +12,9 @@
 module use /opt/insy/modulefiles
 module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
+mkdir /tmp/mbhuradia
+cp -r /tudelft.net/staff-umbrella/Enzymix/Enzymix/processed_big_atoms /tmp/mbhuradia/
+
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
 srun python train.py train.yml --name $1 --layers $2 --add_layers $3
