@@ -84,7 +84,7 @@ class FullDPM(nn.Module):
             
         in_feat=torch.cat((c_noisy, t_embed), dim=1) # (L x 23)
 
-        pred_node_feat , p_pred = self.eps_net(h=in_feat, x=p_noisy, edges=edges, edge_attr=None) #(L x 23), (L x 3)
+        pred_node_feat , p_pred = self.eps_net(h=in_feat, x=p_noisy.clone().detach(), edges=edges, edge_attr=None) #(L x 23), (L x 3)
         
 
         c_denoised = pred_node_feat[:, :20]

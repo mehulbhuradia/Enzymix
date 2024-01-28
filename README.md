@@ -63,3 +63,9 @@ slurmstepd: error: Detected 1 oom-kill event(s) in StepId=9209586.0. Some of you
 srun: error: influ2: task 0: Out Of Memory
 srun: launch/slurm: _step_signal: Terminating StepId=9209586.0
 slurmstepd: error: Detected 1 oom-kill event(s) in StepId=9209586.batch. Some of your processes may have been killed by the cgroup $
+
+
+# print("pout",p_pred[0,0])
+        # print("pin",p_noisy[0,0])
+        #  todo figure out hy its the same?
+didnt work cuz x was being changed
