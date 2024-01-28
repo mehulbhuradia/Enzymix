@@ -40,3 +40,26 @@ conda install pyg -c pyg
 conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 conda install packaging
 
+
+
+
+sbatch script.sbatch name layers addlayers
+
+eg:
+
+sbatch script.sbatch bigacomplex 2 4
+
+
+squeue -u mbhuradia
+
+squeue -u mbhuradia -t RUNNING -h | wc -l
+
+14 x 4 =206078 egcl layers ran out of memory
+
+8 x 8 = 188888 ran out
+
+RuntimeError: DataLoader worker (pid 191071) is killed by signal: Killed.
+slurmstepd: error: Detected 1 oom-kill event(s) in StepId=9209586.0. Some of your processes may have been killed by the cgroup out-$
+srun: error: influ2: task 0: Out Of Memory
+srun: launch/slurm: _step_signal: Terminating StepId=9209586.0
+slurmstepd: error: Detected 1 oom-kill event(s) in StepId=9209586.batch. Some of your processes may have been killed by the cgroup $

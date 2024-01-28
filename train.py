@@ -27,6 +27,9 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--resume', type=str, default=None)
     parser.add_argument('--name', type=str, default="")
+    parser.add_argument('--layers', type=int, default=2)
+    parser.add_argument('--add_layers', type=int, default=0)
+
 
     args = parser.parse_args()
 
@@ -42,7 +45,7 @@ if __name__ == '__main__':
         if args.resume:
             log_dir = os.path.dirname(os.path.dirname(args.resume))
         else:
-            log_dir = get_new_log_dir(args.logdir, prefix=config_name, tag=args.tag) + args.name
+            log_dir = get_new_log_dir(args.logdir, prefix=config_name, tag=args.tag) + args.name +'_layers_'+str(args.layers)+'_add_layers_'+str(args.add_layers)
         ckpt_dir = os.path.join(log_dir, 'checkpoints')
         if not os.path.exists(ckpt_dir): os.makedirs(ckpt_dir)
         logger = get_logger('train', log_dir)
@@ -78,9 +81,11 @@ if __name__ == '__main__':
 
     # Model
     logger.info('Building model...')
-    model = FullDPM(n_layers=config.train.num_layers).to(args.device)
+    model = FullDPM(n_layers=args.layers,additional_layers=args.add_layers).to(args.device)
     logger.info('Number of parameters: %d' % count_parameters(model))
-
+    logger.info('Number of EGCL layers: %d' % args.layers)
+    logger.info('Number of additional layers: %d' % args.add_layers)
+    logger.info('Name of  the run: %s' % args.name)
     # Optimizer & scheduler
     optimizer = get_optimizer(config.train.optimizer, model)
     scheduler = get_scheduler(config.train.scheduler, optimizer)
@@ -105,7 +110,7 @@ if __name__ == '__main__':
         model.train()
         avg_loss = {}
         avg_loss['overall'] = 0
-        avg_loss['rot'] = 0
+        # avg_loss['rot'] = 0
         avg_loss['pos'] = 0
         avg_loss['seq'] = 0
         avg_forward_time = 0
@@ -133,7 +138,7 @@ if __name__ == '__main__':
                     'optimizer': optimizer.state_dict(),
                     'scheduler': scheduler.state_dict(),
                     'iteration': it,
-                    'batch': recursive_to(batch, 'cpu'),
+                    'batch': recursive_to(x, 'cpu'),
                 }, os.path.join(log_dir, 'checkpoint_nan_%d.pt' % it))
                 raise KeyboardInterrupt()
             
@@ -142,7 +147,7 @@ if __name__ == '__main__':
             time_backward_end = current_milli_time()
 
             avg_loss['overall'] += loss_dict['overall']
-            avg_loss['rot'] += loss_dict['rot']
+            # avg_loss['rot'] += loss_dict['rot']
             avg_loss['pos'] += loss_dict['pos']
             avg_loss['seq'] += loss_dict['seq']
 
@@ -156,7 +161,7 @@ if __name__ == '__main__':
                 optimizer.zero_grad()
             
         avg_loss['overall'] /= number_of_samples
-        avg_loss['rot'] /= number_of_samples
+        # avg_loss['rot'] /= number_of_samples
         avg_loss['pos'] /= number_of_samples
         avg_loss['seq'] /= number_of_samples
         avg_forward_time /= number_of_samples
@@ -169,7 +174,7 @@ if __name__ == '__main__':
         loss_tape = ValidationLossTape()
         avg_loss = {}
         avg_loss['overall'] = 0
-        avg_loss['rot'] = 0
+        # avg_loss['rot'] = 0
         avg_loss['pos'] = 0
         avg_loss['seq'] = 0
         number_of_samples = len(val_loader)
@@ -184,7 +189,7 @@ if __name__ == '__main__':
                 loss_dict['overall'] = loss
                 # Accumulate
                 avg_loss['overall'] += loss_dict['overall']
-                avg_loss['rot'] += loss_dict['rot']
+                # avg_loss['rot'] += loss_dict['rot']
                 avg_loss['pos'] += loss_dict['pos']
                 avg_loss['seq'] += loss_dict['seq']
         
@@ -195,7 +200,7 @@ if __name__ == '__main__':
             scheduler.step()
 
         avg_loss['overall'] /= number_of_samples
-        avg_loss['rot'] /= number_of_samples
+        # avg_loss['rot'] /= number_of_samples
         avg_loss['pos'] /= number_of_samples
         avg_loss['seq'] /= number_of_samples
 
@@ -204,7 +209,7 @@ if __name__ == '__main__':
     # Main training loop
     try:
         # Set up early stopping
-        early_stopping = {'counter': 0, 'best_loss': float('inf')}
+        early_stopping = {'counter': 0, 'best_loss': float('inf'), 'best_pos': float('inf'), 'best_seq': float('inf')}
         max_patience = config.train.early_stop_patience
 
         for it in range(it_first, config.train.max_epochs + 1):
@@ -225,8 +230,11 @@ if __name__ == '__main__':
                 log_losses(avg_val_loss, it, 'val', logger, writer)  
                 
                 # Check for early stopping
-                if avg_val_loss['overall'] < early_stopping['best_loss']:
-                    early_stopping['best_loss'] = avg_val_loss['overall']
+                # if avg_val_loss['overall'] < early_stopping['best_loss']:
+                if avg_val_loss['pos'] < early_stopping['best_pos'] or avg_val_loss['seq'] < early_stopping['best_seq']:
+                    # early_stopping['best_loss'] = avg_val_loss['overall']
+                    early_stopping['best_pos'] = avg_val_loss['pos']
+                    early_stopping['best_seq'] = avg_val_loss['seq']
                     early_stopping['counter'] = 0
                     if not args.debug:
                         ckpt_path = os.path.join(ckpt_dir, '%d.pt' % it)

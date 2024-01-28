@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 
 
 class ProtienStructuresDataset(Dataset):
-    def __init__(self, path='./processed',max_len=300):
+    def __init__(self, path='./processed_big_atoms',max_len=300):
         self.paths = []
         for pdb in os.listdir(path):
           length=pdb.split('_')[2].split('.')[0]
@@ -22,8 +22,9 @@ class ProtienStructuresDataset(Dataset):
           data = json.load(file)
         coords=torch.Tensor(data['coords'])
         one_hot=torch.Tensor(data['one_hot'])
-        v = torch.Tensor(data['v'])
+        # v = torch.Tensor(data['v'])
         edges=[]
         for e in data['edges']:
           edges.append(torch.tensor(e, dtype=torch.int64))
-        return coords, one_hot, v, edges
+        # return coords, one_hot, v, edges
+        return coords, one_hot, 0, edges
