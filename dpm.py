@@ -41,7 +41,7 @@ class FullDPM(nn.Module):
         p = p_norm * self.position_scale
         return p
 
-    def forward(self, p_0, c_0, v_0, e, t=None):
+    def forward(self, p_0, c_0, v_0, e, t=None,analyse=False):
         # L is sequence length, N is 1
         # p_0: (N, L, 3) coordinates
         # c_0: (N, L, 20) one-hot encoding of amino acid sequence
@@ -120,5 +120,6 @@ class FullDPM(nn.Module):
         ).sum(dim=-1)    # (N, L)
         loss_seq = (kldiv * mask_generate).sum() / (mask_generate.sum().float() + 1e-8)
         loss_dict['seq'] = loss_seq
-        
+        if analyse:
+            return loss_dict, p_pred, p_0, c_0, c_denoised    
         return loss_dict
