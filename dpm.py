@@ -12,8 +12,8 @@ class FullDPM(nn.Module):
     def __init__(
         self, 
         in_node_nf =23, 
-        hidden_nf=23,
-        out_node_nf=23,
+        hidden_nf=20,
+        out_node_nf=20,
         num_steps=100, 
         n_layers=4, 
         x_dim =9,
@@ -82,9 +82,7 @@ class FullDPM(nn.Module):
     
         t_embed = torch.stack([beta, torch.sin(beta), torch.cos(beta)], dim=-1)[:, None, :].squeeze(0).expand(L, 3) # (L, 3)
             
-        in_feat=torch.cat((c_noisy, t_embed), dim=1) # (L x 23)
-
-        pred_node_feat , p_pred = self.eps_net(h=in_feat, x=p_noisy.clone().detach(), edges=edges, edge_attr=None) #(L x 23), (L x 3)
+        pred_node_feat , p_pred = self.eps_net(h=c_noisy, x=p_noisy.clone().detach(), t=t_embed, edges=edges, edge_attr=None) #(L x 23), (L x 3)
         
 
         c_denoised = pred_node_feat[:, :20]
