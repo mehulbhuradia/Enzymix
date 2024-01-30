@@ -27,4 +27,4 @@ class ProtienStructuresDataset(Dataset):
         for e in data['edges']:
           edges.append(torch.tensor(e, dtype=torch.int64))
         # return coords, one_hot, v, edges
-        return coords, one_hot, 0, edges, file_path
+        return coords, one_hot, 0, edges, file_path.split('/')[-1].split('.')[0].split('_')[0]
