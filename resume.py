@@ -11,12 +11,55 @@ torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
 import matplotlib.pyplot as plt
 import numpy as np
+import csv
 
 from diffab.utils.misc import *
 from diffab.utils.data import *
 from diffab.utils.train import *
 from dpm import FullDPM
 from af_db import ProtienStructuresDataset
+
+
+def plotter(p_pred, p_0, c_0, c_denoised):
+    
+
+    c_0 = np.argmax(c_0.detach().to("cpu").numpy(), axis=1).reshape(-1, 1)
+    c_denoised = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1).reshape(-1, 1)
+
+    array1 = p_pred.detach().to("cpu").squeeze(0).t().numpy()
+    array2 = p_0.detach().to("cpu").squeeze(0).t().numpy()
+    
+    # Create subplots
+    fig, axs = plt.subplots(nrows=1, ncols=4, figsize=(12, 3))
+
+    # Plot each line in a subplot
+    # g_CA_coords
+    axs[0].plot(array1[0], color='r', label='pred')
+    axs[0].plot(array2[0], color='b', label='p_0')
+    # Add legend
+    axs[0].legend()
+    axs[0].set_title('C-a x')
+    # g_CA_coords
+    axs[1].plot(array1[1], color='r', label='pred')
+    axs[1].plot(array2[1], color='b', label='p_0')
+    # Add legend
+    axs[1].legend()
+    axs[1].set_title('C-a y')
+    # g_CA_coords
+    axs[2].plot(array1[2], color='r', label='pred')
+    axs[2].plot(array2[2], color='b', label='p_0')
+    # Add legend
+    axs[2].legend()
+    axs[2].set_title('C-a z')
+    # sequence
+    axs[3].plot(c_0, color='r', label='pred')
+    axs[3].plot(c_denoised, color='b', label='p_0')
+    # Add legend
+    axs[3].legend()
+    axs[3].set_title('Sequence')
+
+    # Show the plot
+    plt.show()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -38,10 +81,9 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs_big_11_1_24/EGCL_2_MLP_24/checkpoints/3460.pt"
+    args.resume="D:/Thesis/Enzymix/logs_big_11_1_24/EGCL_2_MLP_24/checkpoints/935.pt"
     # Logging
     if args.debug:
-        logger = get_logger('train', None)
         writer = BlackHole()
     else:
         if args.resume:
@@ -50,16 +92,14 @@ if __name__ == '__main__':
             log_dir = get_new_log_dir(args.logdir, prefix=config_name, tag=args.tag) + args.name +'_layers_'+str(args.layers)+'_add_layers_'+str(args.add_layers)
         ckpt_dir = os.path.join(log_dir, 'checkpoints')
         if not os.path.exists(ckpt_dir): os.makedirs(ckpt_dir)
-        logger = get_logger('train', log_dir)
-        writer = torch.utils.tensorboard.SummaryWriter(log_dir)
         tensorboard_trace_handler = torch.profiler.tensorboard_trace_handler(log_dir)
         if not os.path.exists(os.path.join(log_dir, os.path.basename(args.config))):
             shutil.copyfile(args.config, os.path.join(log_dir, os.path.basename(args.config)))
-    logger.info(args)
-    logger.info(config)
+    print(args)
+    print(config)
 
     # Data
-    logger.info('Loading dataset...')
+    print('Loading dataset...')
     dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len)
     d_loader = DataLoader(
         dataset, 
@@ -67,72 +107,59 @@ if __name__ == '__main__':
         shuffle=False,
         num_workers=args.num_workers
     )
-    logger.info('Samples %d' % (len(dataset)))
+    print('Samples %d' % (len(dataset)))
 
     # Check if CUDA (GPU support) is available
     if torch.cuda.is_available():
         # Get the number of available GPUs
         num_gpus = torch.cuda.device_count()
-        logger.info(f"GPU is available with {num_gpus} {'GPU' if num_gpus == 1 else 'GPUs'}")
+        print(f"GPU is available with {num_gpus} {'GPU' if num_gpus == 1 else 'GPUs'}")
     else:
-        logger.info("No GPU available, using CPU.")
+        print("No GPU available, using CPU.")
 
     # Model
-    logger.info('Building model...')
+    print('Building model...')
     model = FullDPM(n_layers=args.layers,additional_layers=args.add_layers).to(args.device)
-    logger.info('Number of parameters: %d' % count_parameters(model))
-    logger.info('Number of EGCL layers: %d' % args.layers)
-    logger.info('Number of additional layers: %d' % args.add_layers)
-    logger.info('Name of  the run: %s' % args.name)
-    
+
 
     # Resume
     ckpt_path = args.resume
-    logger.info('Resuming from checkpoint: %s' % ckpt_path)
     ckpt = torch.load(ckpt_path, map_location=args.device)
     model.load_state_dict(ckpt['model'])
 
+    csv_file_name = "dummy.csv"
+    with open(csv_file_name, mode='w', newline='') as csv_file:
+        csv_writer = csv.writer(csv_file)
+        for i,x in enumerate(tqdm(d_loader, desc='Running: ', dynamic_ncols=True)):
+            
+            x = recursive_to(x, args.device)
+            
+            # Forward
+            # if args.debug: torch.set_anomaly_enabled(True)
 
-    for i,x in enumerate(tqdm(d_loader, desc='Running: ', dynamic_ncols=True)):
-        time_start = current_milli_time()
-        x = recursive_to(x, args.device)
-        print(x[4])
-        # Forward
-        # if args.debug: torch.set_anomaly_enabled(True)
+            loss_dict, p_pred, p_0, c_0, c_denoised = model(x[0], x[1], x[2], x[3],analyse=True)
+            c_denoised=c_denoised.squeeze(0)
+            
+            c_in = np.argmax(c_0.detach().to("cpu").numpy(), axis=1)
+            c_out = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1)
+            counte = 0
+            for i in range(len(c_in)):
+                if c_in[i] != c_out[i]:
+                    counte += 1
 
-        loss_dict, p_pred, p_0, c_0, c_denoised = model(x[0], x[1], x[2], x[3],analyse=True)
+            length = len(c_in)
 
-        array1 = p_pred.detach().to("cpu").squeeze(0).t().numpy()
-        array2 = p_0.detach().to("cpu").squeeze(0).t().numpy()
-        
-        print(array1[0][0])
-        print(array2[0][0])
-        print(array1[0][1])
-        print(array2[0][1])
-        print(array1[0][2])
-        print(array2[0][2])
+            print(loss_dict['pos'])
+            plotter(p_pred, p_0, c_0, c_denoised)
 
-        # Create subplots
-        fig, axs = plt.subplots(nrows=3, ncols=3, figsize=(12, 10))
-
-        # Plot each line in a subplot
-        for i in range(3):
-            for j in range(3):
-                idx = i * 3 + j
-                axs[i, j].plot(array1[idx], color='r', label='pred')
-                axs[i, j].plot(array2[idx], color='b', label='p_0')
-
-        # Show the plot
-        plt.show()
-        loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
-        loss_dict['overall'] = loss
-        time_forward_end = current_milli_time()
-
-
-        if not torch.isfinite(loss):
-            logger.error('NaN or Inf detected.')
-            raise KeyboardInterrupt()
+            loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
+            loss_dict['overall'] = loss
+            
+            # csv_writer.writerow([x[4], loss_dict['pos'].item(), loss_dict['seq'].item(),counte,length])
             
 
+            if not torch.isfinite(loss):
+                print('NaN or Inf detected.')
+                raise KeyboardInterrupt()
+                
 
-    
