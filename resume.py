@@ -69,10 +69,11 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--tag', type=str, default='')
-    
+
     parser.add_argument('--name', type=str, default="")
     parser.add_argument('--layers', type=int, default=2)
     parser.add_argument('--add_layers', type=int, default=24)
+    parser.add_argument('--uni', type=str, default=None)
 
 
     args = parser.parse_args()
@@ -127,39 +128,70 @@ if __name__ == '__main__':
     ckpt = torch.load(ckpt_path, map_location=args.device)
     model.load_state_dict(ckpt['model'])
 
-    csv_file_name = "dummy.csv"
-    with open(csv_file_name, mode='w', newline='') as csv_file:
-        csv_writer = csv.writer(csv_file)
-        for i,x in enumerate(tqdm(d_loader, desc='Running: ', dynamic_ncols=True)):
-            
-            x = recursive_to(x, args.device)
-            
-            # Forward
-            # if args.debug: torch.set_anomaly_enabled(True)
-
-            loss_dict, p_pred, p_0, c_0, c_denoised = model(x[0], x[1], x[2], x[3],analyse=True)
-            c_denoised=c_denoised.squeeze(0)
-            
-            c_in = np.argmax(c_0.detach().to("cpu").numpy(), axis=1)
-            c_out = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1)
-            counte = 0
-            for i in range(len(c_in)):
-                if c_in[i] != c_out[i]:
-                    counte += 1
-
-            length = len(c_in)
-
-            print(loss_dict['pos'])
-            plotter(p_pred, p_0, c_0, c_denoised)
-
-            loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
-            loss_dict['overall'] = loss
-            
-            # csv_writer.writerow([x[4], loss_dict['pos'].item(), loss_dict['seq'].item(),counte,length])
-            
-
-            if not torch.isfinite(loss):
-                print('NaN or Inf detected.')
-                raise KeyboardInterrupt()
+    def test_all():
+        csv_file_name = "dummy.csv"
+        with open(csv_file_name, mode='w', newline='') as csv_file:
+            csv_writer = csv.writer(csv_file)
+            for i,x in enumerate(tqdm(d_loader, desc='Running: ', dynamic_ncols=True)):
                 
+                x = recursive_to(x, args.device)
+                
+                loss_dict, p_pred, p_0, c_0, c_denoised = model(x[0], x[1], x[2], x[3],analyse=True)
+                c_denoised=c_denoised.squeeze(0)
+                
+                c_in = np.argmax(c_0.detach().to("cpu").numpy(), axis=1)
+                c_out = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1)
+                counte = 0
+                for i in range(len(c_in)):
+                    if c_in[i] != c_out[i]:
+                        counte += 1
 
+                length = len(c_in)
+
+                print(loss_dict['pos'])
+                plotter(p_pred, p_0, c_0, c_denoised)
+
+                loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
+                loss_dict['overall'] = loss
+                
+                # csv_writer.writerow([x[4], loss_dict['pos'].item(), loss_dict['seq'].item(),counte,length])
+                
+                if not torch.isfinite(loss):
+                    print('NaN or Inf detected.')
+                    raise KeyboardInterrupt() 
+
+    def test_one(uniprotid):
+        coords, one_hot, _, edges, path = dataset.get_item_by_uniprotid(uniprotid)
+        
+        coords=coords.unsqueeze(0).to(args.device)
+        one_hot=one_hot.unsqueeze(0).to(args.device)
+        edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
+
+        
+        loss_dict, p_pred, p_0, c_0, c_denoised = model(coords, one_hot, 0, edges,analyse=True)
+        c_denoised=c_denoised.squeeze(0)
+        
+        c_in = np.argmax(c_0.detach().to("cpu").numpy(), axis=1)
+        c_out = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1)
+        
+        counte = 0
+        for i in range(len(c_in)):
+            if c_in[i] != c_out[i]:
+                counte += 1
+
+        length = len(c_in)
+
+        print(loss_dict,"Incorrect", counte,"Total", length)
+
+        plotter(p_pred, p_0, c_0, c_denoised)
+
+        loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
+        loss_dict['overall'] = loss
+        
+        if not torch.isfinite(loss):
+            print('NaN or Inf detected.')
+        
+    if args.uni:
+        test_one(args.uni)
+    else:    
+        test_all()
