@@ -30,33 +30,33 @@ def plotter(p_pred, p_0, c_0, c_denoised):
     array2 = p_0.detach().to("cpu").squeeze(0).t().numpy()
     
     # Create subplots
-    fig, axs = plt.subplots(nrows=1, ncols=4, figsize=(12, 3))
+    fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
 
     # Plot each line in a subplot
     # g_CA_coords
-    axs[0].plot(array1[0], color='r', label='pred')
-    axs[0].plot(array2[0], color='b', label='p_0')
+    axs[0][0].plot(array1[0], color='r', label='pred')
+    axs[0][0].plot(array2[0], color='b', label='p_0')
     # Add legend
-    axs[0].legend()
-    axs[0].set_title('C-a x')
+    axs[0][0].legend()
+    axs[0][0].set_title('C-a x')
     # g_CA_coords
-    axs[1].plot(array1[1], color='r', label='pred')
-    axs[1].plot(array2[1], color='b', label='p_0')
+    axs[1][0].plot(array1[1], color='r', label='pred')
+    axs[1][0].plot(array2[1], color='b', label='p_0')
     # Add legend
-    axs[1].legend()
-    axs[1].set_title('C-a y')
+    axs[1][0].legend()
+    axs[1][0].set_title('C-a y')
     # g_CA_coords
-    axs[2].plot(array1[2], color='r', label='pred')
-    axs[2].plot(array2[2], color='b', label='p_0')
+    axs[0][1].plot(array1[2], color='r', label='pred')
+    axs[0][1].plot(array2[2], color='b', label='p_0')
     # Add legend
-    axs[2].legend()
-    axs[2].set_title('C-a z')
+    axs[0][1].legend()
+    axs[0][1].set_title('C-a z')
     # sequence
-    axs[3].plot(c_0, color='r', label='pred')
-    axs[3].plot(c_denoised, color='b', label='p_0')
+    axs[1][1].plot(c_0, color='r', label='pred')
+    axs[1][1].plot(c_denoised, color='b', label='p_0')
     # Add legend
-    axs[3].legend()
-    axs[3].set_title('Sequence')
+    axs[1][1].legend()
+    axs[1][1].set_title('Sequence')
 
     # Show the plot
     plt.show()
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', type=str, default="")
     parser.add_argument('--layers', type=int, default=2)
     parser.add_argument('--add_layers', type=int, default=24)
-    parser.add_argument('--uni', type=str, default=None)
+    parser.add_argument('--uni', type=str, default="A0A1D6H1J3")
 
 
     args = parser.parse_args()
@@ -128,70 +128,75 @@ if __name__ == '__main__':
     ckpt = torch.load(ckpt_path, map_location=args.device)
     model.load_state_dict(ckpt['model'])
 
-    def test_all():
-        csv_file_name = "dummy.csv"
-        with open(csv_file_name, mode='w', newline='') as csv_file:
-            csv_writer = csv.writer(csv_file)
-            for i,x in enumerate(tqdm(d_loader, desc='Running: ', dynamic_ncols=True)):
+    # def test_all():
+    #     with torch.no_grad():
+    #         for i,x in enumerate(tqdm(d_loader, desc='Running: ', dynamic_ncols=True)):
                 
-                x = recursive_to(x, args.device)
+    #             x = recursive_to(x, args.device)
                 
-                loss_dict, p_pred, p_0, c_0, c_denoised = model(x[0], x[1], x[2], x[3],analyse=True)
-                c_denoised=c_denoised.squeeze(0)
+    #             loss_dict, p_pred, p_0, c_0, c_denoised = model(x[0], x[1], x[2], x[3],analyse=True)
+    #             c_denoised=c_denoised.squeeze(0)
                 
-                c_in = np.argmax(c_0.detach().to("cpu").numpy(), axis=1)
-                c_out = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1)
-                counte = 0
-                for i in range(len(c_in)):
-                    if c_in[i] != c_out[i]:
-                        counte += 1
+    #             c_in = np.argmax(c_0.detach().to("cpu").numpy(), axis=1)
+    #             c_out = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1)
+    #             counte = 0
+    #             for i in range(len(c_in)):
+    #                 if c_in[i] != c_out[i]:
+    #                     counte += 1
 
-                length = len(c_in)
+    #             length = len(c_in)
 
-                print(loss_dict['pos'])
-                plotter(p_pred, p_0, c_0, c_denoised)
 
-                loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
-                loss_dict['overall'] = loss
+    #             loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
+    #             loss_dict['overall'] = loss
+
+    #             if "A0A1D6H1J3" in x[4][0]:
+    #                 print(loss_dict['pos'])
+    #                 plotter(p_pred, p_0, c_0, c_denoised)
                 
-                # csv_writer.writerow([x[4], loss_dict['pos'].item(), loss_dict['seq'].item(),counte,length])
                 
-                if not torch.isfinite(loss):
-                    print('NaN or Inf detected.')
-                    raise KeyboardInterrupt() 
+    #             if not torch.isfinite(loss):
+    #                 print('NaN or Inf detected.')
+    #                 raise KeyboardInterrupt() 
 
     def test_one(uniprotid):
-        coords, one_hot, _, edges, path = dataset.get_item_by_uniprotid(uniprotid)
-        
-        coords=coords.unsqueeze(0).to(args.device)
-        one_hot=one_hot.unsqueeze(0).to(args.device)
-        edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
+        with torch.no_grad():
+            model.eval()
 
-        
-        loss_dict, p_pred, p_0, c_0, c_denoised = model(coords, one_hot, 0, edges,analyse=True)
-        c_denoised=c_denoised.squeeze(0)
-        
-        c_in = np.argmax(c_0.detach().to("cpu").numpy(), axis=1)
-        c_out = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1)
-        
-        counte = 0
-        for i in range(len(c_in)):
-            if c_in[i] != c_out[i]:
-                counte += 1
+            coords, one_hot, _, edges, path = dataset.get_item_by_uniprotid(uniprotid)
+            
+            coords=coords.unsqueeze(0).to(args.device)
+            one_hot=one_hot.unsqueeze(0).to(args.device)
+            edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
 
-        length = len(c_in)
+            
+            loss_dict, p_pred, p_0, c_0, c_denoised = model(coords, one_hot, 0, edges,analyse=True)
+            
+            c_denoised=c_denoised.squeeze(0)
+            
+            c_in = np.argmax(c_0.detach().to("cpu").numpy(), axis=1)
+            c_out = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1)
+            
+            counte = 0
+            for i in range(len(c_in)):
+                if c_in[i] != c_out[i]:
+                    counte += 1
 
-        print(loss_dict,"Incorrect", counte,"Total", length)
+            length = len(c_in)
 
-        plotter(p_pred, p_0, c_0, c_denoised)
+            loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
+            loss_dict['overall'] = loss
+            
+            if "A0A1D6H1J3" in path:
+                print(loss_dict,"Incorrect", counte,"Total", length,path)
 
-        loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
-        loss_dict['overall'] = loss
-        
-        if not torch.isfinite(loss):
-            print('NaN or Inf detected.')
+            # if args.uni:
+            #     plotter(p_pred, p_0, c_0, c_denoised)
+
+            
+            if not torch.isfinite(loss):
+                print('NaN or Inf detected.')
         
     if args.uni:
         test_one(args.uni)
-    else:    
-        test_all()
+
