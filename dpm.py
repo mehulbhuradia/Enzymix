@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import functools
+from tqdm.auto import tqdm
 from diffab.modules.diffusion.transition import PositionTransition, AminoacidCategoricalTransition
 
 import egnn_complex as eg
@@ -121,5 +122,78 @@ class FullDPM(nn.Module):
         loss_seq = (kldiv * mask_generate).sum() / (mask_generate.sum().float() + 1e-8)
         loss_dict['seq'] = loss_seq
         if analyse:
-            return loss_dict, p_pred, p_0, c_0, c_denoised    
+            return loss_dict, p_pred, p_0, c_0, c_denoised,t  
         return loss_dict
+
+    
+    # @torch.no_grad()
+    # def sample(
+    #     self, 
+    #     p, s, e, 
+    #     res_feat, pair_feat, 
+    #     sample_structure=True, sample_sequence=True,
+    #     pbar=False,
+    # ):
+    #     """
+    #     Args:
+    #         p:  Positions of contextual residues, (N, L, 3).
+    #         s:  Sequence of contextual residues, (N, L).
+    #     """
+    #     N, L = p.shape[:2]
+    #     p = self._normalize_position(p)
+    #     mask_generate = torch.full((N,L), True, dtype=torch.bool, device = p.device) #or 0s?
+
+
+    #     # Set the orientation and position of residues to be predicted to random values
+    #     if sample_structure:
+    #         p_rand = torch.randn_like(p)
+    #         p_init = torch.where(mask_generate[:, :, None].expand_as(p), p_rand, p)
+    #     else:
+    #         p_init = p
+
+    #     if sample_sequence:
+    #         s_rand = torch.randint_like(s, low=0, high=19)
+    #         s_init = torch.where(mask_generate, s_rand, s)
+    #     else:
+    #         s_init = s
+
+    #     traj = {self.num_steps: ( self._unnormalize_position(p_init), s_init)}
+    #     if pbar:
+    #         pbar = functools.partial(tqdm, total=self.num_steps, desc='Sampling')
+    #     else:
+    #         pbar = lambda x: x
+    #     for t in pbar(range(self.num_steps, 0, -1)):
+    #         p_t, s_t = traj[t]
+    #         p_t = self._normalize_position(p_t)
+            
+    #         beta = self.trans_pos.var_sched.betas[t].expand([N, ])
+    #         t_tensor = torch.full([N, ], fill_value=t, dtype=torch.long, device=self._dummy.device)
+            
+            
+            
+    #         p_t = p_t.squeeze(0) # L,3
+            
+    #         s_t = s_t.squeeze(0) # L,20
+            
+    #         p_0=p_0.squeeze(0) # L,3
+    #         c_0=c_0.squeeze(0) # L,20
+            
+
+    #         pred_node_feat , p_pred = self.eps_net(h=in_feat, x=p_noisy.clone().detach(), edges=edges, edge_attr=None) #(L x 23), (L x 3)
+        
+    #         eps_p, c_denoised = self.eps_net(
+    #              p_t, s_t, res_feat, pair_feat,
+    #         )   # (N, L, 3), (N, L, 3, 3), (N, L, 3)
+
+    #         p_next = self.trans_pos.denoise(p_t, eps_p, mask_generate, t_tensor)
+    #         _, s_next = self.trans_seq.denoise(s_t, c_denoised, mask_generate, t_tensor)
+
+    #         if not sample_structure:
+    #             p_next = p_t
+    #         if not sample_sequence:
+    #             s_next = s_t
+
+    #         traj[t-1] = ( self._unnormalize_position(p_next), s_next)
+    #         traj[t] = tuple(x.cpu() for x in traj[t])    # Move previous states to cpu memory.
+
+    #     return traj

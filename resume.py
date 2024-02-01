@@ -73,7 +73,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', type=str, default="")
     parser.add_argument('--layers', type=int, default=2)
     parser.add_argument('--add_layers', type=int, default=24)
-    parser.add_argument('--uni', type=str, default="A0A1D6H1J3")
+    parser.add_argument('--uni', type=str, default=None)
 
 
     args = parser.parse_args()
@@ -170,7 +170,7 @@ if __name__ == '__main__':
             edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
 
             
-            loss_dict, p_pred, p_0, c_0, c_denoised = model(coords, one_hot, 0, edges,analyse=True)
+            loss_dict, p_pred, p_0, c_0, c_denoised,t = model(coords, one_hot, 0, edges,analyse=True)
             
             c_denoised=c_denoised.squeeze(0)
             
@@ -188,10 +188,11 @@ if __name__ == '__main__':
             loss_dict['overall'] = loss
             
             if "A0A1D6H1J3" in path:
-                print(loss_dict,"Incorrect", counte,"Total", length,path)
+            # if args.uni in path:
+                print(loss_dict,"Incorrect", counte,"Total", length,path,t)
 
-            # if args.uni:
-            #     plotter(p_pred, p_0, c_0, c_denoised)
+            if args.uni:
+                plotter(p_pred, p_0, c_0, c_denoised)
 
             
             if not torch.isfinite(loss):
@@ -199,4 +200,7 @@ if __name__ == '__main__':
         
     if args.uni:
         test_one(args.uni)
+    else:
+        for i in dataset.paths:
+            test_one(i)
 
