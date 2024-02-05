@@ -20,7 +20,7 @@ from dpm import FullDPM
 from af_db import ProtienStructuresDataset
 
 
-def plotter(p_pred, p_0, c_0, c_denoised):
+def plotter(p_pred, p_0,p_noisy, c_0, c_denoised):
     
 
     c_0 = np.argmax(c_0.detach().to("cpu").numpy(), axis=1).reshape(-1, 1)
@@ -28,6 +28,7 @@ def plotter(p_pred, p_0, c_0, c_denoised):
 
     array1 = p_pred.detach().to("cpu").squeeze(0).t().numpy()
     array2 = p_0.detach().to("cpu").squeeze(0).t().numpy()
+    array3 = p_noisy.detach().to("cpu").squeeze(0).t().numpy()
     
     # Create subplots
     fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
@@ -36,18 +37,21 @@ def plotter(p_pred, p_0, c_0, c_denoised):
     # g_CA_coords
     axs[0][0].plot(array1[0], color='r', label='pred')
     axs[0][0].plot(array2[0], color='b', label='p_0')
+    axs[0][0].plot(array3[0], color='g', label='p_noisy')
     # Add legend
     axs[0][0].legend()
     axs[0][0].set_title('C-a x')
     # g_CA_coords
     axs[1][0].plot(array1[1], color='r', label='pred')
     axs[1][0].plot(array2[1], color='b', label='p_0')
+    axs[1][0].plot(array3[1], color='g', label='p_noisy')
     # Add legend
     axs[1][0].legend()
     axs[1][0].set_title('C-a y')
     # g_CA_coords
     axs[0][1].plot(array1[2], color='r', label='pred')
     axs[0][1].plot(array2[2], color='b', label='p_0')
+    axs[0][1].plot(array3[2], color='g', label='p_noisy')
     # Add legend
     axs[0][1].legend()
     axs[0][1].set_title('C-a z')
@@ -170,7 +174,7 @@ if __name__ == '__main__':
             edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
 
             
-            loss_dict, p_pred, p_0, c_0, c_denoised,t = model(coords, one_hot, 0, edges,analyse=True)
+            loss_dict, p_pred, p_0,p_noisy, c_0, c_denoised,t = model(coords, one_hot, 0, edges,analyse=True)
             
             c_denoised=c_denoised.squeeze(0)
             
@@ -191,8 +195,8 @@ if __name__ == '__main__':
             # if args.uni in path:
                 print(loss_dict,"Incorrect", counte,"Total", length,path,t)
 
-            if args.uni:
-                plotter(p_pred, p_0, c_0, c_denoised)
+            if "A0A1D6H1J3" in path:
+                plotter(p_pred, p_0,p_noisy, c_0, c_denoised)
 
             
             if not torch.isfinite(loss):

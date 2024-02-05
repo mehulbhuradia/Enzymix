@@ -39,8 +39,10 @@ conda install -c conda-forge tensorboard
 conda install pyg -c pyg
 conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 conda install packaging
-
-
+conda install wandb --channel conda-forge
+conda install -c conda-forge matplotlib 
+conda install -c conda-forge imageio
+conda install scipy
 
 
 sbatch script.sbatch name layers addlayers
