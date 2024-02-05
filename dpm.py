@@ -82,28 +82,29 @@ class FullDPM(nn.Module):
     
         t_embed = torch.stack([beta, torch.sin(beta), torch.cos(beta)], dim=-1)[:, None, :].squeeze(0).expand(L, 3) # (L, 3)
             
-        pred_node_feat , p_pred = self.eps_net(h=c_noisy, x=p_noisy.clone().detach(), t=t_embed, edges=edges, edge_attr=None) #(L x 23), (L x 3)
+        pred_node_feat , eps_pred = self.eps_net(h=c_noisy, x=p_noisy.clone().detach(), t=t_embed, edges=edges, edge_attr=None) #(L x 23), (L x 3)
         
 
         c_denoised = pred_node_feat[:, :20]
         
         
         # Softmax
-        c_denoised = F.softmax(c_denoised, dim=-1)
-
-        
-        
+        c_denoised = F.softmax(c_denoised, dim=-1)        
         c_denoised = c_denoised.unsqueeze(0) # (1, L, 20)
 
+        # print(eps_p.shape, eps_pred.shape)
+
         p_noisy = p_noisy.unsqueeze(0) # 1,L,3
-        p_pred = p_pred.unsqueeze(0) # 1,L,3
+        # p_pred = p_pred.unsqueeze(0) # 1,L,3
+        eps_pred = eps_pred.unsqueeze(0) # 1,L,3
+        eps_pred = eps_pred - p_noisy
         p_0 = p_0.unsqueeze(0) # 1,L,3
 
 
         loss_dict = {}
 
         # Position loss
-        loss_pos = F.mse_loss(p_pred, p_0, reduction='none').sum(dim=-1)  # (L, 3)
+        loss_pos = F.mse_loss(eps_pred, eps_p, reduction='none').sum(dim=-1)  # (L, 3)
         loss_pos = (loss_pos * mask_generate).sum() / (mask_generate.sum().float() + 1e-8)
         loss_dict['pos'] = loss_pos
 

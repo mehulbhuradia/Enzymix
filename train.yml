@@ -3,11 +3,11 @@ train:
     rot: 1.0
     pos: 1.0
     seq: 0.2
-  max_epochs: 10000
+  max_epochs: 2000
   val_freq: 5
   batch_size: 4
   seed: 2022
-  max_len: 300
+  max_len: 100
   path: ./processed_big_atoms
   early_stop_patience: 100
   max_grad_norm: 100.0
