@@ -24,7 +24,7 @@ cd /tudelft.net/staff-umbrella/Enzymix/Enzymix/
 <!-- download log files -->
 scp -r daic:/tudelft.net/staff-umbrella/Enzymix/Enzymix/logs/ ./
 
-# tensorboard --logdir D:\Thesis\Enzymix\logs\   
+# tensorboard --logdir D:\Thesis\Enzymix\logs\
 
 <!-- cuz limited space -->
 conda config --add pkgs_dirs /tmp/
