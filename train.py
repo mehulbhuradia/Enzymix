@@ -156,7 +156,7 @@ if __name__ == '__main__':
 
             if i % config.train.batch_size == 0 or i == len(train_loader) - 1:
                 # no gradent clipping
-                # orig_grad_norm = clip_grad_norm_(model.parameters(), config.train.max_grad_norm)
+                orig_grad_norm = clip_grad_norm_(model.parameters(), config.train.max_grad_norm)
                 optimizer.step()
                 optimizer.zero_grad()
             
