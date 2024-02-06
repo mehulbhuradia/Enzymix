@@ -124,7 +124,7 @@ if __name__ == '__main__':
             # Forward
             # if args.debug: torch.set_anomaly_enabled(True)
 
-            loss_dict = model(x[0], x[1], x[2], x[3])
+            loss_dict = model(x[0], x[1], x[2])
             loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
             loss_dict['overall'] = loss
             time_forward_end = current_milli_time()
@@ -184,7 +184,7 @@ if __name__ == '__main__':
                 # Prepare data
                 x = recursive_to(x, args.device)
                 # Forward
-                loss_dict = model(x[0], x[1], x[2], x[3])
+                loss_dict = model(x[0], x[1], x[2])
                 loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
                 loss_dict['overall'] = loss
                 # Accumulate

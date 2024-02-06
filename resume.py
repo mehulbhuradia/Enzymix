@@ -83,7 +83,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--name', type=str, default="")
     parser.add_argument('--layers', type=int, default=2)
-    parser.add_argument('--add_layers', type=int, default=24)
+    parser.add_argument('--add_layers', type=int, default=0)
     parser.add_argument('--uni', type=str, default=None)
 
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/noise_100_2_24_2000/checkpoints/2000.pt"
+    args.resume="D:/Thesis/Enzymix/logs/nonormalnew_300_layers_2_add_layers_0/checkpoints/200.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -139,49 +139,19 @@ if __name__ == '__main__':
     ckpt = torch.load(ckpt_path, map_location=args.device)
     model.load_state_dict(ckpt['model'])
 
-    # def test_all():
-    #     with torch.no_grad():
-    #         for i,x in enumerate(tqdm(d_loader, desc='Running: ', dynamic_ncols=True)):
-                
-    #             x = recursive_to(x, args.device)
-                
-    #             loss_dict, p_pred, p_0, c_0, c_denoised = model(x[0], x[1], x[2], x[3],analyse=True)
-    #             c_denoised=c_denoised.squeeze(0)
-                
-    #             c_in = np.argmax(c_0.detach().to("cpu").numpy(), axis=1)
-    #             c_out = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1)
-    #             counte = 0
-    #             for i in range(len(c_in)):
-    #                 if c_in[i] != c_out[i]:
-    #                     counte += 1
-
-    #             length = len(c_in)
-
-
-    #             loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
-    #             loss_dict['overall'] = loss
-
-    #             if "A0A1D6H1J3" in x[4][0]:
-    #                 print(loss_dict['pos'])
-    #                 plotter(p_pred, p_0, c_0, c_denoised)
-                
-                
-    #             if not torch.isfinite(loss):
-    #                 print('NaN or Inf detected.')
-    #                 raise KeyboardInterrupt() 
 
     def test_one(uniprotid):
         with torch.no_grad():
             model.eval()
-            t = torch.randint(1, 10, (1,), dtype=torch.long)
-            coords, one_hot, _, edges, path = dataset.get_item_by_uniprotid(uniprotid)
+            t = torch.randint(40, 60, (1,), dtype=torch.long)
+            coords, one_hot, edges, path = dataset.get_item_by_uniprotid(uniprotid)
             
             coords=coords.unsqueeze(0).to(args.device)
             one_hot=one_hot.unsqueeze(0).to(args.device)
             edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
 
             
-            loss_dict, eps_pred, eps_p, c_0, c_denoised,t,p_noisy,p_0 = model(coords, one_hot, 0, edges,analyse=True,t=t)
+            loss_dict, eps_pred, eps_p, c_0, c_denoised,t,p_noisy,p_0 = model(coords, one_hot, edges,analyse=True,t=t)
             
             c_denoised=c_denoised.squeeze(0)
             

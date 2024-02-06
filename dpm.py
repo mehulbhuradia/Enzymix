@@ -42,7 +42,7 @@ class FullDPM(nn.Module):
         p = p_norm * self.position_scale
         return p
 
-    def forward(self, p_0, c_0, v_0, e, t=None,analyse=False):
+    def forward(self, p_0, c_0, e, t=None,analyse=False):
         # L is sequence length, N is 1
         # p_0: (N, L, 3) coordinates
         # c_0: (N, L, 20) one-hot encoding of amino acid sequence

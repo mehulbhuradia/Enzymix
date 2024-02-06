@@ -23,7 +23,7 @@ class ProtienStructuresDataset(Dataset):
     edges=[]
     for e in data['edges']:
       edges.append(torch.tensor(e, dtype=torch.int64))
-    return coords, one_hot, 0, edges, file_path
+    return coords, one_hot, edges, file_path
   
   def get_item_by_uniprotid(self, uniprotid):
     for path in self.paths:
@@ -35,4 +35,4 @@ class ProtienStructuresDataset(Dataset):
         edges=[]
         for e in data['edges']:
           edges.append(torch.tensor(e, dtype=torch.int64))
-        return coords, one_hot, 0, edges, path
+        return coords, one_hot, edges, path
