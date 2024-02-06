@@ -179,8 +179,25 @@ if __name__ == '__main__':
             if not torch.isfinite(loss):
                 print('NaN or Inf detected.')
         
-    if args.uni:
-        test_one(args.uni)
-    else:
-        for i in dataset.paths:
-            test_one(i)
+    # if args.uni:
+    #     test_one(args.uni)
+    # else:
+    #     for i in dataset.paths:
+    #         test_one(i)
+
+def sample_one(uniprotid):
+    model.eval()
+    coords, one_hot, edges, path = dataset.get_item_by_uniprotid(uniprotid)
+    coords=coords.unsqueeze(0).to(args.device)
+    one_hot=one_hot.unsqueeze(0).to(args.device)
+    edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
+
+    traj = model.sample(coords, one_hot, edges, pbar=True)
+
+
+if args.uni:
+    sample_one(args.uni)
+else:
+    for i in dataset.paths:
+        sample_one(i)
+        break
