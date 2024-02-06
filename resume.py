@@ -20,14 +20,15 @@ from dpm import FullDPM
 from af_db import ProtienStructuresDataset
 
 
-def plotter(p_pred, p_0, c_0, c_denoised):
+def plotter(esp_pred, eps, c_0, c_denoised,p_noisy):
     
 
     c_0 = np.argmax(c_0.detach().to("cpu").numpy(), axis=1).reshape(-1, 1)
     c_denoised = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1).reshape(-1, 1)
 
-    array1 = p_pred.detach().to("cpu").squeeze(0).t().numpy()
-    array2 = p_0.detach().to("cpu").squeeze(0).t().numpy()
+    array1 = esp_pred.detach().to("cpu").squeeze(0).t().numpy()
+    array2 = eps.detach().to("cpu").squeeze(0).t().numpy()
+    array3 = p_noisy.detach().to("cpu").squeeze(0).t().numpy()
     
     
     # Create subplots
@@ -36,28 +37,31 @@ def plotter(p_pred, p_0, c_0, c_denoised):
     # Plot each line in a subplot
     # g_CA_coords
     axs[0][0].plot(array1[0], color='r', label='pred')
-    axs[0][0].plot(array2[0], color='b', label='p_0')
+    axs[0][0].plot(array2[0], color='b', label='eps')
+    axs[0][0].plot(array3[0], color='g', label='p_noisy')
     
     # Add legend
     axs[0][0].legend()
     axs[0][0].set_title('C-a x')
     # g_CA_coords
     axs[1][0].plot(array1[1], color='r', label='pred')
-    axs[1][0].plot(array2[1], color='b', label='p_0')
+    axs[1][0].plot(array2[1], color='b', label='eps')
+    axs[1][0].plot(array3[1], color='g', label='p_noisy')
     
     # Add legend
     axs[1][0].legend()
     axs[1][0].set_title('C-a y')
     # g_CA_coords
     axs[0][1].plot(array1[2], color='r', label='pred')
-    axs[0][1].plot(array2[2], color='b', label='p_0')
+    axs[0][1].plot(array2[2], color='b', label='eps')
+    axs[0][1].plot(array3[2], color='g', label='p_noisy')
     
     # Add legend
     axs[0][1].legend()
     axs[0][1].set_title('C-a z')
     # sequence
     axs[1][1].plot(c_0, color='r', label='pred')
-    axs[1][1].plot(c_denoised, color='b', label='p_0')
+    axs[1][1].plot(c_denoised, color='b', label='true')
     # Add legend
     axs[1][1].legend()
     axs[1][1].set_title('Sequence')
@@ -76,7 +80,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--name', type=str, default="")
     parser.add_argument('--layers', type=int, default=2)
-    parser.add_argument('--add_layers', type=int, default=24)
+    parser.add_argument('--add_layers', type=int, default=0)
     parser.add_argument('--uni', type=str, default=None)
 
 
@@ -86,7 +90,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/train_2024_02_05__23_07_28noise100_local_layers_2_add_layers_24/checkpoints/140.pt"
+    args.resume="D:/Thesis/Enzymix/logs/train_2024_02_06__02_03_53zero_layers_2_add_layers_0/checkpoints/515.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -166,7 +170,7 @@ if __name__ == '__main__':
     def test_one(uniprotid):
         with torch.no_grad():
             model.eval()
-            t = torch.randint(95, 100, (1,), dtype=torch.long)
+            t = torch.randint(1, 10, (1,), dtype=torch.long)
             coords, one_hot, _, edges, path = dataset.get_item_by_uniprotid(uniprotid)
             
             coords=coords.unsqueeze(0).to(args.device)
@@ -174,7 +178,7 @@ if __name__ == '__main__':
             edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
 
             
-            loss_dict, eps_pred, eps_p, c_0, c_denoised,t = model(coords, one_hot, 0, edges,analyse=True,t=t)
+            loss_dict, eps_pred, eps_p, c_0, c_denoised,t,p_noisy = model(coords, one_hot, 0, edges,analyse=True,t=t)
             
             c_denoised=c_denoised.squeeze(0)
             
@@ -196,7 +200,7 @@ if __name__ == '__main__':
             print(loss_dict,"Incorrect", counte,"Total", length,path,t)
 
             # if "A0A1D6H1J3" in path:
-            plotter(eps_pred, eps_p, c_0, c_denoised)
+            plotter(eps_pred, eps_p, c_0, c_denoised,p_noisy)
 
             
             if not torch.isfinite(loss):

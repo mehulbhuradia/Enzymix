@@ -120,5 +120,5 @@ class FullDPM(nn.Module):
         loss_seq = (kldiv * mask_generate).sum() / (mask_generate.sum().float() + 1e-8)
         loss_dict['seq'] = loss_seq
         if analyse:
-            return loss_dict, eps_pred, eps_p, c_0, c_denoised,t
+            return loss_dict, eps_pred, eps_p, c_0, c_denoised,t,p_noisy
         return loss_dict
