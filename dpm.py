@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import functools
+from tqdm.auto import tqdm
 from diffab.modules.diffusion.transition import PositionTransition, AminoacidCategoricalTransition
-
+from diffab.modules.common.layers import clampped_one_hot
 import egnn_complex as eg
 
 
@@ -20,7 +21,7 @@ class FullDPM(nn.Module):
         additional_layers=0,
         trans_pos_opt={}, 
         trans_seq_opt={},
-        position_scale=[10.0],
+        position_scale=[1.0],
     ):
         super().__init__()
         
@@ -58,7 +59,7 @@ class FullDPM(nn.Module):
         if t == None:
             t = torch.randint(0, self.num_steps, (N,), dtype=torch.long, device=self._dummy.device)
 
-        mask_generate = torch.full((N,L), True, dtype=torch.bool, device = p_0.device) #or 0s?
+        mask_generate = torch.full((N,L), True, dtype=torch.bool, device = p_0.device) 
 
         # Normalize positions
         p_0 = self._normalize_position(p_0)
@@ -82,11 +83,8 @@ class FullDPM(nn.Module):
     
         t_embed = torch.stack([beta, torch.sin(beta), torch.cos(beta)], dim=-1)[:, None, :].squeeze(0).expand(L, 3) # (L, 3)
             
-        pred_node_feat , eps_pred = self.eps_net(h=c_noisy, x=p_noisy.clone().detach(), t=t_embed, edges=edges, edge_attr=None) #(L x 23), (L x 3)
-        
-
-        c_denoised = pred_node_feat[:, :20]
-        
+        c_denoised , eps_pred = self.eps_net(h=c_noisy, x=p_noisy.clone().detach(), t=t_embed, edges=edges, edge_attr=None) #(L x 23), (L x 3)
+                
         
         # Softmax
         c_denoised = F.softmax(c_denoised, dim=-1)        
@@ -120,5 +118,79 @@ class FullDPM(nn.Module):
         loss_seq = (kldiv * mask_generate).sum() / (mask_generate.sum().float() + 1e-8)
         loss_dict['seq'] = loss_seq
         if analyse:
-            return loss_dict, eps_pred, eps_p, c_0, c_denoised,t,p_noisy
+            return loss_dict, eps_pred, eps_p, c_0, c_denoised,t,p_noisy,p_0
         return loss_dict
+
+    # @torch.no_grad()
+    # def sample(
+    #     self, 
+    #     p, 
+    #     c, 
+    #     e,
+    #     sample_structure=True, sample_sequence=True,
+    #     pbar=False,
+    # ):
+    #     """
+    #     Args:
+    #         p:  Positions of contextual residues, (N, L, 3).
+    #         s:  Sequence of contextual residues, (N, L).
+    #     """
+        
+    #     N, L = p.shape[:2]
+    #     s=self.trans_seq._sample(c) # c_0 should be N,L,20
+    #     p = self._normalize_position(p)
+    #     mask_generate = torch.full((N,L), True, dtype=torch.bool, device = p.device) #or 0s?
+    #     edges=[]
+    #     for edge in e:
+    #         edges.append(edge.squeeze(0))
+
+    #     # Set the orientation and position of residues to be predicted to random values
+    #     if sample_structure:
+    #         p_rand = torch.randn_like(p)
+    #         p_init = torch.where(mask_generate[:, :, None].expand_as(p), p_rand, p)
+    #     else:
+    #         p_init = p
+
+    #     if sample_sequence:
+    #         s_rand = torch.randint_like(s, low=0, high=19)
+    #         s_init = torch.where(mask_generate, s_rand, s)
+    #     else:
+    #         s_init = s
+
+    #     traj = {self.num_steps: (self._unnormalize_position(p_init), s_init)}
+    #     if pbar:
+    #         pbar = functools.partial(tqdm, total=self.num_steps, desc='Sampling')
+    #     else:
+    #         pbar = lambda x: x
+    #     for t in pbar(range(self.num_steps, 0, -1)):
+    #         v_t, p_t, s_t = traj[t]
+    #         p_t = self._normalize_position(p_t)
+            
+    #         beta = self.trans_pos.var_sched.betas[t].expand([N, ])
+    #         t_tensor = torch.full([N, ], fill_value=t, dtype=torch.long, device=self._dummy.device)
+
+    #         t_embed = torch.stack([beta, torch.sin(beta), torch.cos(beta)], dim=-1)[:, None, :].squeeze(0).expand(L, 3) # (L, 3)
+            
+    #         c_t = clampped_one_hot(s_t, num_classes=20).float() # (N, L, K).
+
+    #         p_t=p_t.squeeze(0) # L,3
+    #         c_t=c_t.squeeze(0) # L,20        
+    
+    #         c_denoised , eps_p = self.eps_net(h=c_t, x=p_t, t=t_embed, edges=edges, edge_attr=None) #(L x 23), (L x 3)
+
+    #         # Softmax
+    #         c_denoised = F.softmax(c_denoised, dim=-1)        
+    #         c_denoised = c_denoised.unsqueeze(0) # (1, L, 20)
+
+    #         p_next = self.trans_pos.denoise(p_t, eps_p, mask_generate, t_tensor)
+    #         _, s_next = self.trans_seq.denoise(s_t, c_denoised, mask_generate, t_tensor)
+
+    #         if not sample_structure:
+    #             p_next = p_t
+    #         if not sample_sequence:
+    #             s_next = s_t
+
+    #         traj[t-1] = (self._unnormalize_position(p_next), s_next)
+    #         traj[t] = tuple(x.cpu() for x in traj[t])    # Move previous states to cpu memory.
+
+    #     return traj

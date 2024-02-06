@@ -20,8 +20,7 @@ from dpm import FullDPM
 from af_db import ProtienStructuresDataset
 
 
-def plotter(esp_pred, eps, c_0, c_denoised,p_noisy):
-    
+def plotter(esp_pred, eps, c_0, c_denoised,p_noisy,p_0):
 
     c_0 = np.argmax(c_0.detach().to("cpu").numpy(), axis=1).reshape(-1, 1)
     c_denoised = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1).reshape(-1, 1)
@@ -29,6 +28,7 @@ def plotter(esp_pred, eps, c_0, c_denoised,p_noisy):
     array1 = esp_pred.detach().to("cpu").squeeze(0).t().numpy()
     array2 = eps.detach().to("cpu").squeeze(0).t().numpy()
     array3 = p_noisy.detach().to("cpu").squeeze(0).t().numpy()
+    array4 = p_0.detach().to("cpu").squeeze(0).t().numpy()
     
     
     # Create subplots
@@ -39,6 +39,7 @@ def plotter(esp_pred, eps, c_0, c_denoised,p_noisy):
     axs[0][0].plot(array1[0], color='r', label='pred')
     axs[0][0].plot(array2[0], color='b', label='eps')
     axs[0][0].plot(array3[0], color='g', label='p_noisy')
+    axs[0][0].plot(array4[0], color='y', label='p_0')
     
     # Add legend
     axs[0][0].legend()
@@ -47,6 +48,7 @@ def plotter(esp_pred, eps, c_0, c_denoised,p_noisy):
     axs[1][0].plot(array1[1], color='r', label='pred')
     axs[1][0].plot(array2[1], color='b', label='eps')
     axs[1][0].plot(array3[1], color='g', label='p_noisy')
+    axs[1][0].plot(array4[1], color='y', label='p_0')
     
     # Add legend
     axs[1][0].legend()
@@ -55,7 +57,8 @@ def plotter(esp_pred, eps, c_0, c_denoised,p_noisy):
     axs[0][1].plot(array1[2], color='r', label='pred')
     axs[0][1].plot(array2[2], color='b', label='eps')
     axs[0][1].plot(array3[2], color='g', label='p_noisy')
-    
+    axs[0][1].plot(array4[2], color='y', label='p_0')
+
     # Add legend
     axs[0][1].legend()
     axs[0][1].set_title('C-a z')
@@ -80,7 +83,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--name', type=str, default="")
     parser.add_argument('--layers', type=int, default=2)
-    parser.add_argument('--add_layers', type=int, default=0)
+    parser.add_argument('--add_layers', type=int, default=24)
     parser.add_argument('--uni', type=str, default=None)
 
 
@@ -90,7 +93,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/train_2024_02_06__02_03_53zero_layers_2_add_layers_0/checkpoints/515.pt"
+    args.resume="D:/Thesis/Enzymix/logs/noise_100_2_24_2000/checkpoints/2000.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -178,7 +181,7 @@ if __name__ == '__main__':
             edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
 
             
-            loss_dict, eps_pred, eps_p, c_0, c_denoised,t,p_noisy = model(coords, one_hot, 0, edges,analyse=True,t=t)
+            loss_dict, eps_pred, eps_p, c_0, c_denoised,t,p_noisy,p_0 = model(coords, one_hot, 0, edges,analyse=True,t=t)
             
             c_denoised=c_denoised.squeeze(0)
             
@@ -200,7 +203,7 @@ if __name__ == '__main__':
             print(loss_dict,"Incorrect", counte,"Total", length,path,t)
 
             # if "A0A1D6H1J3" in path:
-            plotter(eps_pred, eps_p, c_0, c_denoised,p_noisy)
+            plotter(eps_pred, eps_p, c_0, c_denoised,p_noisy,p_0)
 
             
             if not torch.isfinite(loss):
