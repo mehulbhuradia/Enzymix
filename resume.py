@@ -39,7 +39,7 @@ def plotter(esp_pred, eps, c_0, c_denoised,p_noisy,p_0):
     axs[0][0].plot(array1[0], color='r', label='pred')
     axs[0][0].plot(array2[0], color='b', label='eps')
     axs[0][0].plot(array3[0], color='g', label='p_noisy')
-    axs[0][0].plot(array4[0], color='y', label='p_0')
+    # axs[0][0].plot(array4[0], color='y', label='p_0')
     
     # Add legend
     axs[0][0].legend()
@@ -48,7 +48,7 @@ def plotter(esp_pred, eps, c_0, c_denoised,p_noisy,p_0):
     axs[1][0].plot(array1[1], color='r', label='pred')
     axs[1][0].plot(array2[1], color='b', label='eps')
     axs[1][0].plot(array3[1], color='g', label='p_noisy')
-    axs[1][0].plot(array4[1], color='y', label='p_0')
+    # axs[1][0].plot(array4[1], color='y', label='p_0')
     
     # Add legend
     axs[1][0].legend()
@@ -57,7 +57,7 @@ def plotter(esp_pred, eps, c_0, c_denoised,p_noisy,p_0):
     axs[0][1].plot(array1[2], color='r', label='pred')
     axs[0][1].plot(array2[2], color='b', label='eps')
     axs[0][1].plot(array3[2], color='g', label='p_noisy')
-    axs[0][1].plot(array4[2], color='y', label='p_0')
+    # axs[0][1].plot(array4[2], color='y', label='p_0')
 
     # Add legend
     axs[0][1].legend()
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/nonormalnew_300_layers_2_add_layers_0/checkpoints/200.pt"
+    args.resume="D:/Thesis/Enzymix/logs/nonormalnew_300_layers_2_add_layers_0/checkpoints/250.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     def test_one(uniprotid):
         with torch.no_grad():
             model.eval()
-            t = torch.randint(40, 60, (1,), dtype=torch.long)
+            t = torch.randint(90, 100, (1,), dtype=torch.long)
             coords, one_hot, edges, path = dataset.get_item_by_uniprotid(uniprotid)
             
             coords=coords.unsqueeze(0).to(args.device)
@@ -179,25 +179,9 @@ if __name__ == '__main__':
             if not torch.isfinite(loss):
                 print('NaN or Inf detected.')
         
-    # if args.uni:
-    #     test_one(args.uni)
-    # else:
-    #     for i in dataset.paths:
-    #         test_one(i)
+    if args.uni:
+        test_one(args.uni)
+    else:
+        for i in dataset.paths:
+            test_one(i)
 
-def sample_one(uniprotid):
-    model.eval()
-    coords, one_hot, edges, path = dataset.get_item_by_uniprotid(uniprotid)
-    coords=coords.unsqueeze(0).to(args.device)
-    one_hot=one_hot.unsqueeze(0).to(args.device)
-    edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
-
-    traj = model.sample(coords, one_hot, edges, pbar=True)
-
-
-if args.uni:
-    sample_one(args.uni)
-else:
-    for i in dataset.paths:
-        traj = sample_one(i)
-        break

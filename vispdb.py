@@ -9,10 +9,10 @@ def visualize_ribbon_pdb(pdb_file):
     cmd.load(pdb_file, "molecule")
 
     # Show the ribbon representation
-    cmd.show("ribbon", "molecule")
+    # cmd.show("ribbon", "molecule")
 
     # Zoom to the molecule
-    cmd.zoom("molecule")
+    # cmd.zoom("molecule")
 
     # Display the PyMOL viewer
     cmd.show("cartoon", "molecule")
@@ -21,4 +21,4 @@ def visualize_ribbon_pdb(pdb_file):
     pymol.cmd.rock()
 
 # Replace 'output.pdb' with the actual path to your PDB file
-visualize_ribbon_pdb('new.pdb')
+visualize_ribbon_pdb('old.pdb')

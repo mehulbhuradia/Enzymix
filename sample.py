@@ -153,64 +153,64 @@ plotter(position_100, position_0, coords)
 
 
 position_0 = position_0.detach().to("cpu").squeeze(0).numpy()
-position_100 = position_100.detach().to("cpu").squeeze(0).numpy()*10
+position_100 = position_100.detach().to("cpu").squeeze(0).numpy()
 
 
 
-# amino_acids=["ALA",
-#     "CYS",
-#     "ASP",
-#     "GLU",
-#     "PHE",
-#     "GLY",
-#     "HIS",
-#     "ILE",
-#     "LYS",
-#     "LEU",
-#     "MET",
-#     "ASN",
-#     "PYL",
-#     "PRO",
-#     "GLN",
-#     "ARG",
-#     "SER",
-#     "THR",
-#     "SEC",
-#     "VAL",
-#     "TRP",
-#     "TYR",
-#     "UNK"
-# ]
+amino_acids=["ALA",
+    "CYS",
+    "ASP",
+    "GLU",
+    "PHE",
+    "GLY",
+    "HIS",
+    "ILE",
+    "LYS",
+    "LEU",
+    "MET",
+    "ASN",
+    "PYL",
+    "PRO",
+    "GLN",
+    "ARG",
+    "SER",
+    "THR",
+    "SEC",
+    "VAL",
+    "TRP",
+    "TYR",
+    "UNK"
+]
 
-# sequence_0_name = []
-# for i in sequence_0.tolist():
-#     sequence_0_name.append(amino_acids[i])
+sequence_0_name = []
+for i in sequence_0.tolist():
+    sequence_0_name.append(amino_acids[i])
 
-# sequence_100_name = []
-# for i in sequence_100.tolist():
-#     sequence_100_name.append(amino_acids[i])
+sequence_100_name = []
+for i in sequence_100.tolist():
+    sequence_100_name.append(amino_acids[i])
 
-# residues_100=[]
-# for i in range(len(sequence_100_name)):
-#     temp = {}
-#     temp['name'] = sequence_100_name[i]
-#     temp['CA'] = position_100[i][:3].tolist()
-#     temp['CB'] = position_100[i][3:6].tolist()
-#     temp['CN'] = position_100[i][6:].tolist()
-#     residues_100.append(temp)
+residues_100=[]
+for i in range(len(sequence_100_name)):
+    temp = {}
+    temp['name'] = sequence_100_name[i]
+    temp['CA'] = position_100[i][:3].tolist()
+    temp['CB'] = position_100[i][3:6].tolist()
+    temp['CN'] = position_100[i][6:].tolist()
+    residues_100.append(temp)
 
-# from makepdb import create_pdb_file
+from makepdb import create_pdb_file
 
-# create_pdb_file(residues_100, "new.pdb")
+create_pdb_file(residues_100, "new.pdb")
 
-# residues_0=[]
-# for i in range(len(sequence_0_name)):
-#     temp = {}
-#     temp['name'] = sequence_0_name[i]
-#     temp['CA'] = position_0[i][:3].tolist()
-#     temp['CB'] = position_0[i][3:6].tolist()
-#     temp['CN'] = position_0[i][6:].tolist()
-#     residues_0.append(temp)
+residues_0=[]
+for i in range(len(sequence_0_name)):
+    temp = {}
+    temp['name'] = sequence_0_name[i]
+    temp['CA'] = position_0[i][:3].tolist()
+    temp['CB'] = position_0[i][3:6].tolist()
+    temp['CN'] = position_0[i][6:].tolist()
+    residues_0.append(temp)
 
-# create_pdb_file(residues_0, "old.pdb")
+create_pdb_file(residues_0, "old.pdb")
     
