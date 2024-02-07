@@ -20,55 +20,39 @@ from dpm import FullDPM
 from af_db import ProtienStructuresDataset
 
 
-def plotter(esp_pred, eps, c_0, c_denoised,p_noisy,p_0):
 
-    c_0 = np.argmax(c_0.detach().to("cpu").numpy(), axis=1).reshape(-1, 1)
-    c_denoised = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1).reshape(-1, 1)
+def plotter(t100, t0, coords):
 
-    array1 = esp_pred.detach().to("cpu").squeeze(0).t().numpy()
-    array2 = eps.detach().to("cpu").squeeze(0).t().numpy()
-    array3 = p_noisy.detach().to("cpu").squeeze(0).t().numpy()
-    array4 = p_0.detach().to("cpu").squeeze(0).t().numpy()
-    
-    
+    array1 = t100.detach().to("cpu").squeeze(0).t().numpy()
+    array2 = t0.detach().to("cpu").squeeze(0).t().numpy()
+    array3 = coords.detach().to("cpu").squeeze(0).t().numpy()
+
     # Create subplots
     fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
 
     # Plot each line in a subplot
     # g_CA_coords
-    axs[0][0].plot(array1[0], color='r', label='pred')
-    axs[0][0].plot(array2[0], color='b', label='eps')
-    axs[0][0].plot(array3[0], color='g', label='p_noisy')
-    axs[0][0].plot(array4[0], color='y', label='p_0')
-    
+    axs[0][0].plot(array1[0], color='r', label='100')
+    axs[0][0].plot(array2[0], color='b', label='0')
+    axs[0][0].plot(array3[0], color='g', label='true')
     # Add legend
     axs[0][0].legend()
     axs[0][0].set_title('C-a x')
     # g_CA_coords
-    axs[1][0].plot(array1[1], color='r', label='pred')
-    axs[1][0].plot(array2[1], color='b', label='eps')
-    axs[1][0].plot(array3[1], color='g', label='p_noisy')
-    axs[1][0].plot(array4[1], color='y', label='p_0')
-    
+    axs[1][0].plot(array1[1], color='r', label='100')
+    axs[1][0].plot(array2[1], color='b', label='0')
+    axs[1][0].plot(array3[1], color='g', label='true')
     # Add legend
     axs[1][0].legend()
     axs[1][0].set_title('C-a y')
     # g_CA_coords
-    axs[0][1].plot(array1[2], color='r', label='pred')
-    axs[0][1].plot(array2[2], color='b', label='eps')
-    axs[0][1].plot(array3[2], color='g', label='p_noisy')
-    axs[0][1].plot(array4[2], color='y', label='p_0')
-
+    axs[0][1].plot(array1[2], color='r', label='100')
+    axs[0][1].plot(array2[2], color='b', label='0')
+    axs[0][1].plot(array3[2], color='g', label='true')
     # Add legend
     axs[0][1].legend()
     axs[0][1].set_title('C-a z')
-    # sequence
-    axs[1][1].plot(c_0, color='r', label='pred')
-    axs[1][1].plot(c_denoised, color='b', label='true')
-    # Add legend
-    axs[1][1].legend()
-    axs[1][1].set_title('Sequence')
-
+    
     # Show the plot
     plt.show()
 
@@ -83,7 +67,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--name', type=str, default="")
     parser.add_argument('--layers', type=int, default=2)
-    parser.add_argument('--add_layers', type=int, default=0)
+    parser.add_argument('--add_layers', type=int, default=24)
     parser.add_argument('--uni', type=str, default=None)
 
 
@@ -93,7 +77,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/nonormalnew_300_layers_2_add_layers_0/checkpoints/200.pt"
+    args.resume="D:/Thesis/Enzymix/logs/noise_100_2_24_2000/checkpoints/2000.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -140,64 +124,93 @@ if __name__ == '__main__':
     model.load_state_dict(ckpt['model'])
 
 
-    def test_one(uniprotid):
-        with torch.no_grad():
-            model.eval()
-            t = torch.randint(40, 60, (1,), dtype=torch.long)
-            coords, one_hot, edges, path = dataset.get_item_by_uniprotid(uniprotid)
-            
-            coords=coords.unsqueeze(0).to(args.device)
-            one_hot=one_hot.unsqueeze(0).to(args.device)
-            edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
-
-            
-            loss_dict, eps_pred, eps_p, c_0, c_denoised,t,p_noisy,p_0 = model(coords, one_hot, edges,analyse=True,t=t)
-            
-            c_denoised=c_denoised.squeeze(0)
-            
-            c_in = np.argmax(c_0.detach().to("cpu").numpy(), axis=1)
-            c_out = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1)
-            
-            counte = 0
-            for i in range(len(c_in)):
-                if c_in[i] != c_out[i]:
-                    counte += 1
-
-            length = len(c_in)
-
-            loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
-            loss_dict['overall'] = loss
-            
-            # if "A0A1D6H1J3" in path:
-            # if args.uni in path:
-            print(loss_dict,"Incorrect", counte,"Total", length,path,t)
-
-            # if "A0A1D6H1J3" in path:
-            plotter(eps_pred, eps_p, c_0, c_denoised,p_noisy,p_0)
-
-            
-            if not torch.isfinite(loss):
-                print('NaN or Inf detected.')
-        
-    # if args.uni:
-    #     test_one(args.uni)
-    # else:
-    #     for i in dataset.paths:
-    #         test_one(i)
-
 def sample_one(uniprotid):
     model.eval()
+    print(f"Sampling from {uniprotid}")
     coords, one_hot, edges, path = dataset.get_item_by_uniprotid(uniprotid)
     coords=coords.unsqueeze(0).to(args.device)
     one_hot=one_hot.unsqueeze(0).to(args.device)
     edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
 
     traj = model.sample(coords, one_hot, edges, pbar=True)
+    return traj,coords
 
 
 if args.uni:
     sample_one(args.uni)
 else:
     for i in dataset.paths:
-        traj = sample_one(i)
+        traj,coords = sample_one(i)
         break
+
+sequence_100=traj[100][1].squeeze(0)
+position_100=traj[100][0]
+sequence_0=traj[0][1].squeeze(0)
+position_0=traj[0][0]
+                 
+
+plotter(position_100, position_0, coords)
+
+
+position_0 = position_0.detach().to("cpu").squeeze(0).numpy()
+position_100 = position_100.detach().to("cpu").squeeze(0).numpy()*10
+
+
+
+# amino_acids=["ALA",
+#     "CYS",
+#     "ASP",
+#     "GLU",
+#     "PHE",
+#     "GLY",
+#     "HIS",
+#     "ILE",
+#     "LYS",
+#     "LEU",
+#     "MET",
+#     "ASN",
+#     "PYL",
+#     "PRO",
+#     "GLN",
+#     "ARG",
+#     "SER",
+#     "THR",
+#     "SEC",
+#     "VAL",
+#     "TRP",
+#     "TYR",
+#     "UNK"
+# ]
+
+# sequence_0_name = []
+# for i in sequence_0.tolist():
+#     sequence_0_name.append(amino_acids[i])
+
+# sequence_100_name = []
+# for i in sequence_100.tolist():
+#     sequence_100_name.append(amino_acids[i])
+
+# residues_100=[]
+# for i in range(len(sequence_100_name)):
+#     temp = {}
+#     temp['name'] = sequence_100_name[i]
+#     temp['CA'] = position_100[i][:3].tolist()
+#     temp['CB'] = position_100[i][3:6].tolist()
+#     temp['CN'] = position_100[i][6:].tolist()
+#     residues_100.append(temp)
+
+# from makepdb import create_pdb_file
+
+# create_pdb_file(residues_100, "new.pdb")
+
+# residues_0=[]
+# for i in range(len(sequence_0_name)):
+#     temp = {}
+#     temp['name'] = sequence_0_name[i]
+#     temp['CA'] = position_0[i][:3].tolist()
+#     temp['CB'] = position_0[i][3:6].tolist()
+#     temp['CN'] = position_0[i][6:].tolist()
+#     residues_0.append(temp)
+
+# create_pdb_file(residues_0, "old.pdb")
+    

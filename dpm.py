@@ -21,7 +21,7 @@ class FullDPM(nn.Module):
         additional_layers=0,
         trans_pos_opt={}, 
         trans_seq_opt={},
-        position_scale=[1.0],
+        position_scale=[10.0],
     ):
         super().__init__()
         
