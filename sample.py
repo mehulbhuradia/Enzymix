@@ -213,4 +213,15 @@ for i in range(len(sequence_0_name)):
     residues_0.append(temp)
 
 create_pdb_file(residues_0, "old.pdb")
-    
+
+residues_true=[]
+coords = coords.detach().to("cpu").squeeze(0).numpy()
+for i in range(len(sequence_0_name)):
+    temp = {}
+    temp['name'] = sequence_0_name[i]
+    temp['CA'] = coords[i][:3].tolist()
+    temp['CB'] = coords[i][3:6].tolist()
+    temp['CN'] = coords[i][6:].tolist()
+    residues_true.append(temp)
+
+create_pdb_file(residues_true, "true.pdb")
