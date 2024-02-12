@@ -21,6 +21,6 @@ def visualize_ribbon_pdb(pdb_file):
     pymol.cmd.rock()
 
 # Replace 'output.pdb' with the actual path to your PDB file
-visualize_ribbon_pdb('new.pdb')
+visualize_ribbon_pdb('0.pdb')
 # visualize_ribbon_pdb('old.pdb')
 # visualize_ribbon_pdb('true.pdb')

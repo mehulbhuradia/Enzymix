@@ -34,12 +34,12 @@ class FullDPM(nn.Module):
         self.register_buffer('position_scale', torch.FloatTensor(position_scale).view(1, 1, -1))
         self.register_buffer('_dummy', torch.empty([0, ]))
 
-    def _normalize_position(self, p):
-        p_norm = (p) / self.position_scale
+    def _normalize_position(self, p, min_p, max_p):
+        p_norm = (2 * ((p) - min_p) / (max_p - min_p) ) - 1
         return p_norm
 
-    def _unnormalize_position(self, p_norm):
-        p = p_norm * self.position_scale
+    def _unnormalize_position(self, p_norm, min_p, max_p):
+        p = (((p_norm  + 1)/2) * (max_p - min_p)) + min_p
         return p
 
     def forward(self, p_0, c_0, e, t=None,analyse=False):
@@ -60,9 +60,11 @@ class FullDPM(nn.Module):
             t = torch.randint(0, self.num_steps, (N,), dtype=torch.long, device=self._dummy.device)
 
         mask_generate = torch.full((N,L), True, dtype=torch.bool, device = p_0.device) 
+        min_p = p_0.min()
+        max_p = p_0.max()
 
         # Normalize positions
-        p_0 = self._normalize_position(p_0)
+        p_0 = self._normalize_position(p_0, min_p, max_p)
 
         # Add noise to positions
         p_noisy, eps_p = self.trans_pos.add_noise(p_0, mask_generate, t)
@@ -151,6 +153,8 @@ class FullDPM(nn.Module):
         # Set the orientation and position of residues to be predicted to random values
         if sample_structure:
             p_rand = torch.randn_like(p)
+            # Add noise to positions
+            # p_rand, eps_p = self.trans_pos.add_noise(p, mask_generate, 1)
             p_init = torch.where(mask_generate[:, :, None].expand_as(p), p_rand, p)
         else:
             p_init = p
@@ -167,7 +171,6 @@ class FullDPM(nn.Module):
         else:
             pbar = lambda x: x
         for t in pbar(range(self.num_steps, 0, -1)):
-            
             p_t, s_t = traj[t]
             p_t = self._normalize_position(p_t)
             

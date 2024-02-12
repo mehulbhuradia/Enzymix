@@ -201,7 +201,7 @@ for i in range(len(sequence_100_name)):
 
 from makepdb import create_pdb_file
 
-create_pdb_file(residues_100, "new.pdb")
+create_pdb_file(residues_100, "100.pdb")
 
 residues_0=[]
 for i in range(len(sequence_0_name)):
@@ -212,7 +212,7 @@ for i in range(len(sequence_0_name)):
     temp['CN'] = position_0[i][6:].tolist()
     residues_0.append(temp)
 
-create_pdb_file(residues_0, "old.pdb")
+create_pdb_file(residues_0, "0.pdb")
 
 residues_true=[]
 coords = coords.detach().to("cpu").squeeze(0).numpy()
