@@ -145,8 +145,13 @@ class FullDPM(nn.Module):
         N, L = p.shape[:2]
 
         mask_generate = torch.full((N,L), True, dtype=torch.bool, device = p.device) #or 0s?
+        
+        min_p = p.min()
+        max_p = p.max()
 
-        p = self._normalize_position(p)
+        p = self._normalize_position(p, min_p, max_p)
+        
+
         
         s=self.trans_seq._sample(c) # c_0 should be N,L,20
 
@@ -165,14 +170,14 @@ class FullDPM(nn.Module):
         else:
             s_init = s
 
-        traj = {self.num_steps: (self._unnormalize_position(p_init), s_init)}
+        traj = {self.num_steps: (self._unnormalize_position(p_init,min_p,max_p), s_init)}
         if pbar:
             pbar = functools.partial(tqdm, total=self.num_steps, desc='Sampling')
         else:
             pbar = lambda x: x
         for t in pbar(range(self.num_steps, 0, -1)):
             p_t, s_t = traj[t]
-            p_t = self._normalize_position(p_t)
+            p_t = self._normalize_position(p_t, min_p, max_p)
             
             t_tensor = torch.full([N, ], fill_value=t, dtype=torch.long, device=self._dummy.device)
 
@@ -200,7 +205,7 @@ class FullDPM(nn.Module):
             if not sample_sequence:
                 s_next = s_t
 
-            traj[t-1] = (self._unnormalize_position(p_next), s_next)
+            traj[t-1] = (self._unnormalize_position(p_next,min_p,max_p), s_next)
             traj[t] = tuple(x.cpu() for x in traj[t])    # Move previous states to cpu memory.
 
         return traj

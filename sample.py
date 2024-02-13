@@ -77,7 +77,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/noise_100_2_24_2000/checkpoints/2000.pt"
+    args.resume="D:/Thesis/Enzymix/logs/train_2024_02_13__06_14_38new_layers_2_add_layers_24/checkpoints/15.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -132,7 +132,7 @@ def sample_one(uniprotid):
     one_hot=one_hot.unsqueeze(0).to(args.device)
     edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
 
-    traj = model.sample(coords, one_hot, edges, pbar=True)
+    traj = model.sample(coords, one_hot, edges, pbar=True, sample_structure=True, sample_sequence=False)
     return traj,coords
 
 
