@@ -66,8 +66,8 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
 
     parser.add_argument('--name', type=str, default="")
-    parser.add_argument('--layers', type=int, default=2)
-    parser.add_argument('--add_layers', type=int, default=24)
+    parser.add_argument('--layers', type=int, default=10)
+    parser.add_argument('--add_layers', type=int, default=0)
     parser.add_argument('--uni', type=str, default=None)
 
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/train_2024_02_13__06_37_02minmax224_layers_2_add_layers_24/checkpoints/10.pt"
+    args.resume="D:/Thesis/Enzymix/logs/test10_0/checkpoints/5.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -132,7 +132,7 @@ def sample_one(uniprotid):
     one_hot=one_hot.unsqueeze(0).to(args.device)
     edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
 
-    traj = model.sample(coords, one_hot, edges, pbar=True, sample_structure=True, sample_sequence=False)
+    traj = model.sample(coords, one_hot, edges, pbar=True, sample_structure=True, sample_sequence=True)
     return traj,coords
 
 
