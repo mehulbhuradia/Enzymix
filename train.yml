@@ -7,8 +7,8 @@ train:
   val_freq: 5
   batch_size: 4
   seed: 2022
-  max_len: 100
-  path: ./processed_big_atoms
+  max_len: 600
+  path: ./brenda_processed
   early_stop_patience: 100
   max_grad_norm: 100.0
   optimizer:

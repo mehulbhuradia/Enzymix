@@ -66,7 +66,7 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
 
     parser.add_argument('--name', type=str, default="")
-    parser.add_argument('--layers', type=int, default=10)
+    parser.add_argument('--layers', type=int, default=6)
     parser.add_argument('--add_layers', type=int, default=0)
     parser.add_argument('--uni', type=str, default=None)
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/test10_0/checkpoints/5.pt"
+    args.resume="D:/Thesis/Enzymix/logs/6/checkpoints/1.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -117,7 +117,6 @@ if __name__ == '__main__':
     print('Building model...')
     model = FullDPM(n_layers=args.layers,additional_layers=args.add_layers).to(args.device)
 
-
     # Resume
     ckpt_path = args.resume
     ckpt = torch.load(ckpt_path, map_location=args.device)
@@ -133,27 +132,19 @@ def sample_one(uniprotid):
     edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
 
     traj = model.sample(coords, one_hot, edges, pbar=True, sample_structure=True, sample_sequence=True)
-    return traj,coords
+    return traj,coords,model.trans_seq._sample(one_hot).squeeze(0)
 
 
-if args.uni:
-    sample_one(args.uni)
-else:
-    for i in dataset.paths:
-        traj,coords = sample_one(i)
-        break
+traj,coords,s_true = sample_one(dataset.paths[2])
+        
 
-sequence_100=traj[100][1].squeeze(0)
-position_100=traj[100][0]
 sequence_0=traj[0][1].squeeze(0)
 position_0=traj[0][0]
-                 
 
-plotter(position_100, position_0, coords)
+# plotter(position_100, position_0, coords)
 
 
 position_0 = position_0.detach().to("cpu").squeeze(0).numpy()
-position_100 = position_100.detach().to("cpu").squeeze(0).numpy()
 
 
 
@@ -186,22 +177,12 @@ sequence_0_name = []
 for i in sequence_0.tolist():
     sequence_0_name.append(amino_acids[i])
 
-sequence_100_name = []
-for i in sequence_100.tolist():
-    sequence_100_name.append(amino_acids[i])
-
-residues_100=[]
-for i in range(len(sequence_100_name)):
-    temp = {}
-    temp['name'] = sequence_100_name[i]
-    temp['CA'] = position_100[i][:3].tolist()
-    temp['CB'] = position_100[i][3:6].tolist()
-    temp['CN'] = position_100[i][6:].tolist()
-    residues_100.append(temp)
+sequence_true_name = []
+for i in s_true.tolist():
+    sequence_true_name.append(amino_acids[i])
 
 from makepdb import create_pdb_file
 
-create_pdb_file(residues_100, "100.pdb")
 
 residues_0=[]
 for i in range(len(sequence_0_name)):
@@ -216,12 +197,17 @@ create_pdb_file(residues_0, "0.pdb")
 
 residues_true=[]
 coords = coords.detach().to("cpu").squeeze(0).numpy()
-for i in range(len(sequence_0_name)):
+for i in range(len(sequence_true_name)):
     temp = {}
-    temp['name'] = sequence_0_name[i]
+    temp['name'] = sequence_true_name[i]
     temp['CA'] = coords[i][:3].tolist()
     temp['CB'] = coords[i][3:6].tolist()
     temp['CN'] = coords[i][6:].tolist()
     residues_true.append(temp)
 
 create_pdb_file(residues_true, "true.pdb")
+
+from vispdb import visualize_ribbon_pdb
+
+# visualize_ribbon_pdb('0.pdb')
+visualize_ribbon_pdb('true.pdb')

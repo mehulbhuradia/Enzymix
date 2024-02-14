@@ -156,10 +156,10 @@ class EGNN(nn.Module):
         self.embedding_out = []
         for i in range(0, n_layers):
             self.add_module("in_linear_layer_%d" % i, nn.Linear(in_node_nf, self.hidden_nf))
-            # if i < 2:
-            #     additional_layers=24
-            # else:
-            #     additional_layers=0
+            if i < 2:
+                additional_layers=24
+            else:
+                additional_layers=0
             self.add_module("gcl_%d" % i, E_GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=in_edge_nf,x_dim=x_dim,
                                                 act_fn=act_fn, residual=residual, attention=attention,
                                                 normalize=normalize, tanh=tanh,additional_layers=additional_layers))
