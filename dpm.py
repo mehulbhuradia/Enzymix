@@ -21,7 +21,6 @@ class FullDPM(nn.Module):
         additional_layers=0,
         trans_pos_opt={}, 
         trans_seq_opt={},
-        position_scale=[10.0],
     ):
         super().__init__()
         
@@ -31,17 +30,19 @@ class FullDPM(nn.Module):
         self.trans_pos = PositionTransition(num_steps, **trans_pos_opt)
         self.trans_seq = AminoacidCategoricalTransition(num_steps, **trans_seq_opt)
 
-        self.register_buffer('position_scale', torch.FloatTensor(position_scale).view(1, 1, -1))
+        # self.register_buffer('position_scale', torch.FloatTensor(position_scale).view(1, 1, -1))
         self.register_buffer('_dummy', torch.empty([0, ]))
+        mean = torch.tensor([-0.7497,  0.5599, -0.2493, -0.7673,  0.5536, -0.2367, -0.7379,  0.5644, -0.2577])
+        std = torch.tensor([14.9381, 12.4760, 15.7061, 14.9017, 12.4261, 15.6763, 14.9080, 12.4432, 15.6748])
+        self.register_buffer('mean', torch.FloatTensor(mean))
+        self.register_buffer('std', torch.FloatTensor(std))
 
-    def _normalize_position(self, p, min_p, max_p):
-        # p_norm = (2 * ((p) - min_p) / (max_p - min_p) ) - 1
-        p_norm = p / self.position_scale
+    def _normalize_position(self, p):
+        p_norm = (p - self.mean) / self.std
         return p_norm
 
-    def _unnormalize_position(self, p_norm, min_p, max_p):
-        # p = (((p_norm  + 1)/2) * (max_p - min_p)) + min_p
-        p = p_norm * self.position_scale
+    def _unnormalize_position(self, p_norm):
+        p = p_norm * self.std + self.mean
         return p
 
     def forward(self, p_0, c_0, e, t=None,analyse=False):
@@ -55,18 +56,15 @@ class FullDPM(nn.Module):
         # p_0=p_0.unsqueeze(0) # N,L,3 , N=1
         # c_0=c_0.unsqueeze(0) # N,L,20
     
-
         N, L = p_0.shape[:2]
 
         if t == None:
             t = torch.randint(0, self.num_steps, (N,), dtype=torch.long, device=self._dummy.device)
 
         mask_generate = torch.full((N,L), True, dtype=torch.bool, device = p_0.device) 
-        min_p = p_0.min()
-        max_p = p_0.max()
 
         # Normalize positions
-        p_0 = self._normalize_position(p_0, min_p, max_p)
+        p_0 = self._normalize_position(p_0)
 
         # Add noise to positions
         p_noisy, eps_p = self.trans_pos.add_noise(p_0, mask_generate, t)
@@ -83,25 +81,19 @@ class FullDPM(nn.Module):
         
         p_0=p_0.squeeze(0) # L,3
         c_0=c_0.squeeze(0) # L,20
-        
     
         t_embed = torch.stack([beta, torch.sin(beta), torch.cos(beta)], dim=-1)[:, None, :].squeeze(0).expand(L, 3) # (L, 3)
             
         c_denoised , eps_pred = self.eps_net(h=c_noisy, x=p_noisy.clone().detach(), t=t_embed, edges=edges, edge_attr=None) #(L x 23), (L x 3)
-                
         
         # Softmax
         c_denoised = F.softmax(c_denoised, dim=-1)        
         c_denoised = c_denoised.unsqueeze(0) # (1, L, 20)
 
-        # print(eps_p.shape, eps_pred.shape)
-
         p_noisy = p_noisy.unsqueeze(0) # 1,L,3
-        # p_pred = p_pred.unsqueeze(0) # 1,L,3
         eps_pred = eps_pred.unsqueeze(0) # 1,L,3
         eps_pred = eps_pred - p_noisy
         p_0 = p_0.unsqueeze(0) # 1,L,3
-
 
         loss_dict = {}
 
@@ -148,12 +140,7 @@ class FullDPM(nn.Module):
 
         mask_generate = torch.full((N,L), True, dtype=torch.bool, device = p.device) #or 0s?
         
-        min_p = p.min()
-        max_p = p.max()
-
-        p = self._normalize_position(p, min_p, max_p)
-        
-
+        p = self._normalize_position(p)
         
         s=self.trans_seq._sample(c) # c_0 should be N,L,20
 
@@ -172,16 +159,14 @@ class FullDPM(nn.Module):
         else:
             s_init = s
 
-        traj = {self.num_steps: (self._unnormalize_position(p_init,min_p,max_p), s_init)}
+        traj = {self.num_steps: (self._unnormalize_position(p_init), s_init)}
         if pbar:
             pbar = functools.partial(tqdm, total=self.num_steps, desc='Sampling')
         else:
             pbar = lambda x: x
         for t in pbar(range(self.num_steps, 0, -1)):
             p_t, s_t = traj[t]
-            min_pt = p_t.min()
-            max_pt = p_t.max()
-            p_t = self._normalize_position(p_t, min_pt, max_pt)
+            p_t = self._normalize_position(p_t)
             
             t_tensor = torch.full([N, ], fill_value=t, dtype=torch.long, device=self._dummy.device)
 
@@ -215,7 +200,7 @@ class FullDPM(nn.Module):
             if not sample_sequence:
                 s_next = s_t
 
-            traj[t-1] = (self._unnormalize_position(p_next,min_p,max_p), s_next)
+            traj[t-1] = (self._unnormalize_position(p_next), s_next)
             traj[t] = tuple(x.cpu() for x in traj[t])    # Move previous states to cpu memory.
 
         return traj
