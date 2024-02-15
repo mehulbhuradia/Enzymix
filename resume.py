@@ -82,7 +82,7 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
 
     parser.add_argument('--name', type=str, default="")
-    parser.add_argument('--layers', type=int, default=2)
+    parser.add_argument('--layers', type=int, default=20)
     parser.add_argument('--add_layers', type=int, default=0)
     parser.add_argument('--uni', type=str, default=None)
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/nonormalnew_300_layers_2_add_layers_0/checkpoints/250.pt"
+    args.resume="D:/Thesis/Enzymix/logs/norm1_complexmodel20240_layers_20_add_layers_24/checkpoints/405.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     def test_one(uniprotid):
         with torch.no_grad():
             model.eval()
-            t = torch.randint(90, 100, (1,), dtype=torch.long)
+            t = torch.randint(1, 10, (1,), dtype=torch.long)
             coords, one_hot, edges, path = dataset.get_item_by_uniprotid(uniprotid)
             
             coords=coords.unsqueeze(0).to(args.device)
@@ -153,6 +153,12 @@ if __name__ == '__main__':
             
             loss_dict, eps_pred, eps_p, c_0, c_denoised,t,p_noisy,p_0 = model(coords, one_hot, edges,analyse=True,t=t)
             
+            if (torch.isnan(eps_p).any().item()):
+                print("eps_p has nan")
+
+            if (torch.isnan(c_denoised).any().item()):
+                print("c_denoised has nan")            
+
             c_denoised=c_denoised.squeeze(0)
             
             c_in = np.argmax(c_0.detach().to("cpu").numpy(), axis=1)

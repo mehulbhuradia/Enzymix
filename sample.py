@@ -66,7 +66,7 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
 
     parser.add_argument('--name', type=str, default="")
-    parser.add_argument('--layers', type=int, default=6)
+    parser.add_argument('--layers', type=int, default=20)
     parser.add_argument('--add_layers', type=int, default=0)
     parser.add_argument('--uni', type=str, default=None)
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/6/checkpoints/1.pt"
+    args.resume="D:/Thesis/Enzymix/logs/norm1_complexmodel20240_layers_20_add_layers_24/checkpoints/405.pt"
     # Logging
     if args.debug:
         writer = BlackHole()

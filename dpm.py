@@ -177,7 +177,9 @@ class FullDPM(nn.Module):
             pbar = lambda x: x
         for t in pbar(range(self.num_steps, 0, -1)):
             p_t, s_t = traj[t]
-            p_t = self._normalize_position(p_t, min_p, max_p)
+            min_pt = p_t.min()
+            max_pt = p_t.max()
+            p_t = self._normalize_position(p_t, min_pt, max_pt)
             
             t_tensor = torch.full([N, ], fill_value=t, dtype=torch.long, device=self._dummy.device)
 
@@ -197,6 +199,12 @@ class FullDPM(nn.Module):
             eps_p = eps_p.unsqueeze(0)
             p_t = p_t.unsqueeze(0)
 
+            if (torch.isnan(eps_p).any().item()):
+                print("eps_p has nan",t)
+                if (torch.isnan(c_denoised).any().item()):
+                    print("c_denoised has nan",t)
+                raise KeyboardInterrupt()
+            
             p_next = self.trans_pos.denoise(p_t, eps_p, mask_generate, t_tensor)
             _, s_next = self.trans_seq.denoise(s_t, c_denoised, mask_generate, t_tensor)
 
