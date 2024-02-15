@@ -35,11 +35,13 @@ class FullDPM(nn.Module):
         self.register_buffer('_dummy', torch.empty([0, ]))
 
     def _normalize_position(self, p, min_p, max_p):
-        p_norm = (2 * ((p) - min_p) / (max_p - min_p) ) - 1
+        # p_norm = (2 * ((p) - min_p) / (max_p - min_p) ) - 1
+        p_norm = p / self.position_scale
         return p_norm
 
     def _unnormalize_position(self, p_norm, min_p, max_p):
-        p = (((p_norm  + 1)/2) * (max_p - min_p)) + min_p
+        # p = (((p_norm  + 1)/2) * (max_p - min_p)) + min_p
+        p = p_norm * self.position_scale
         return p
 
     def forward(self, p_0, c_0, e, t=None,analyse=False):
