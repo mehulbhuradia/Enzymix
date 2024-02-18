@@ -2,7 +2,7 @@ train:
   loss_weights:
     rot: 1.0
     pos: 1.0
-    seq: 0.2
+    seq: 1.0
   max_epochs: 100000
   val_freq: 5
   batch_size: 4

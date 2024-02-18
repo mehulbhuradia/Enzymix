@@ -66,7 +66,7 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
 
     parser.add_argument('--name', type=str, default="")
-    parser.add_argument('--layers', type=int, default=20)
+    parser.add_argument('--layers', type=int, default=40)
     parser.add_argument('--add_layers', type=int, default=0)
     parser.add_argument('--uni', type=str, default=None)
 
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/norm1_complexmodel20240_layers_20_add_layers_24/checkpoints/405.pt"
+    args.resume="D:/Thesis/Enzymix/logs/logs/train_2024_02_15__19_55_46complex_test_layers_40_add_layers_0/checkpoints/5.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -135,7 +135,7 @@ def sample_one(uniprotid):
     return traj,coords,model.trans_seq._sample(one_hot).squeeze(0)
 
 
-traj,coords,s_true = sample_one(dataset.paths[2])
+traj,coords,s_true = sample_one(dataset.paths[19])
         
 
 sequence_0=traj[0][1].squeeze(0)

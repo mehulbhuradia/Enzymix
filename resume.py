@@ -82,7 +82,7 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
 
     parser.add_argument('--name', type=str, default="")
-    parser.add_argument('--layers', type=int, default=20)
+    parser.add_argument('--layers', type=int, default=40)
     parser.add_argument('--add_layers', type=int, default=0)
     parser.add_argument('--uni', type=str, default=None)
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/norm1_complexmodel20240_layers_20_add_layers_24/checkpoints/405.pt"
+    args.resume="D:/Thesis/Enzymix/logs/logs/train_2024_02_15__19_55_46complex_test_layers_40_add_layers_0/checkpoints/5.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     def test_one(uniprotid):
         with torch.no_grad():
             model.eval()
-            t = torch.randint(1, 10, (1,), dtype=torch.long)
+            t = torch.randint(50, 60, (1,), dtype=torch.long)
             coords, one_hot, edges, path = dataset.get_item_by_uniprotid(uniprotid)
             
             coords=coords.unsqueeze(0).to(args.device)
