@@ -2,12 +2,16 @@ from torch import nn
 import torch
 
 
+def init_weights(m):
+    if isinstance(m, nn.Linear):
+        torch.nn.init.xavier_uniform_(m.weight,gain=0.001)
+        m.bias.data.fill_(0.01)
+
 class E_GCL(nn.Module):
     """
     E(n) Equivariant Convolutional Layer
     re
     """
-
     def __init__(self, input_nf, output_nf, hidden_nf, edges_in_d=0,x_dim=9, act_fn=nn.SiLU(), residual=True, attention=False, normalize=False, coords_agg='mean', tanh=False, additional_layers=0):
         super(E_GCL, self).__init__()
         input_edge = input_nf * 2
@@ -64,6 +68,10 @@ class E_GCL(nn.Module):
             att_mlp_layers.append(nn.Linear(hidden_nf, 1))
             att_mlp_layers.append(nn.Sigmoid())
             self.att_mlp = nn.Sequential(*att_mlp_layers)
+        self.coord_mlp.apply(init_weights)
+        self.edge_mlp.apply(init_weights)
+        self.node_mlp.apply(init_weights)
+        # self.att_mlp.apply(self.init_weights)
 
     def edge_model(self, source, target, radial, edge_attr):
         if edge_attr is None:  # Unused.
@@ -170,7 +178,13 @@ class EGNN(nn.Module):
         for i in range(0, self.n_layers):
             h = torch.cat((h, t), dim=1)
             h = self._modules["in_linear_layer_%d" % i](h)
+            # x_copy = x.detach().clone()
             h, x, _ = self._modules["gcl_%d" % i](h, edges, x, edge_attr=edge_attr)
+            
+            if (torch.isnan(x).any().item()):
+                print("NAN in x at layer %d" % i)
+                # print(x_copy)
+                raise KeyboardInterrupt()
             h = self._modules["out_linear_layer_%d" % i](h)
         return h, x
 
