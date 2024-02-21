@@ -10,3 +10,5 @@ thesis/
 jobs.txt
 brenda_structures/
 brenda_processed/
+gen/
+traj/

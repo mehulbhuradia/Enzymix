@@ -18,7 +18,32 @@ from diffab.utils.data import *
 from diffab.utils.train import *
 from dpm import FullDPM
 from af_db import ProtienStructuresDataset
+from makepdb import create_pdb_file
 
+amino_acids=["ALA",
+    "CYS",
+    "ASP",
+    "GLU",
+    "PHE",
+    "GLY",
+    "HIS",
+    "ILE",
+    "LYS",
+    "LEU",
+    "MET",
+    "ASN",
+    "PYL",
+    "PRO",
+    "GLN",
+    "ARG",
+    "SER",
+    "THR",
+    "SEC",
+    "VAL",
+    "TRP",
+    "TYR",
+    "UNK"
+]
 
 
 def plotter(t100, t0, coords):
@@ -77,7 +102,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/logs/train_2024_02_15__19_55_46complex_test_layers_40_add_layers_0/checkpoints/5.pt"
+    args.resume="D:/Thesis/Enzymix/hybridmodel_logs/logs/40_3/checkpoints/280.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -135,79 +160,87 @@ def sample_one(uniprotid):
     return traj,coords,model.trans_seq._sample(one_hot).squeeze(0)
 
 
-traj,coords,s_true = sample_one(dataset.paths[19])
-        
 
-sequence_0=traj[0][1].squeeze(0)
-position_0=traj[0][0]
+def make_pdb(traj,count,num=None):
+    sequence_0=traj[num][1].squeeze(0)
+    position_0=traj[num][0]
+    # plotter(position_100, position_0, coords)
+    position_0 = position_0.detach().to("cpu").squeeze(0).numpy()
 
-# plotter(position_100, position_0, coords)
+    sequence_0_name = []
+    for i in sequence_0.tolist():
+        sequence_0_name.append(amino_acids[i])
 
-
-position_0 = position_0.detach().to("cpu").squeeze(0).numpy()
-
-
-
-amino_acids=["ALA",
-    "CYS",
-    "ASP",
-    "GLU",
-    "PHE",
-    "GLY",
-    "HIS",
-    "ILE",
-    "LYS",
-    "LEU",
-    "MET",
-    "ASN",
-    "PYL",
-    "PRO",
-    "GLN",
-    "ARG",
-    "SER",
-    "THR",
-    "SEC",
-    "VAL",
-    "TRP",
-    "TYR",
-    "UNK"
-]
-
-sequence_0_name = []
-for i in sequence_0.tolist():
-    sequence_0_name.append(amino_acids[i])
-
-sequence_true_name = []
-for i in s_true.tolist():
-    sequence_true_name.append(amino_acids[i])
-
-from makepdb import create_pdb_file
+    residues_0=[]
+    for i in range(len(sequence_0_name)):
+        temp = {}
+        temp['name'] = sequence_0_name[i]
+        temp['CA'] = position_0[i][:3].tolist()
+        temp['CB'] = position_0[i][3:6].tolist()
+        temp['CN'] = position_0[i][6:].tolist()
+        residues_0.append(temp)
+        create_pdb_file(residues_0, "traj/"+str(num)+".pdb")
+    
 
 
-residues_0=[]
-for i in range(len(sequence_0_name)):
-    temp = {}
-    temp['name'] = sequence_0_name[i]
-    temp['CA'] = position_0[i][:3].tolist()
-    temp['CB'] = position_0[i][3:6].tolist()
-    temp['CN'] = position_0[i][6:].tolist()
-    residues_0.append(temp)
+# count = 0
+# for i in dataset.paths:
+#     if "150" in i.split("_")[-1]:
+#         count+=1
+#         try:
+#             traj,coords,s_true = sample_one(i)
+#             make_pdb(traj,count)
+#             sequence_true_name = []
+#             for i in s_true.tolist():
+#                 sequence_true_name.append(amino_acids[i])
+#             residues_true=[]
+#             coords = coords.detach().to("cpu").squeeze(0).numpy()
+#             for i in range(len(sequence_true_name)):
+#                 temp = {}
+#                 temp['name'] = sequence_true_name[i]
+#                 temp['CA'] = coords[i][:3].tolist()
+#                 temp['CB'] = coords[i][3:6].tolist()
+#                 temp['CN'] = coords[i][6:].tolist()
+#                 residues_true.append(temp)
+#             create_pdb_file(residues_true, "gen/"+str(count)+"_true.pdb")
+#         except:
+#             continue
+   
+count = 0
+for i in dataset.paths:
+    if "150" in i.split("_")[-1]:
+        count+=1
+        try:
+            traj,coords,s_true = sample_one(i)
+            for i in range(100):
+                make_pdb(traj,count,i)
+            break
+        except:
+            continue
 
-create_pdb_file(residues_0, "0.pdb")
 
-residues_true=[]
-coords = coords.detach().to("cpu").squeeze(0).numpy()
-for i in range(len(sequence_true_name)):
-    temp = {}
-    temp['name'] = sequence_true_name[i]
-    temp['CA'] = coords[i][:3].tolist()
-    temp['CB'] = coords[i][3:6].tolist()
-    temp['CN'] = coords[i][6:].tolist()
-    residues_true.append(temp)
+# for i in range(20):
+#     traj,coords,s_true = sample_one(dataset.paths[19])
+#     make_pdb(traj,i)
 
-create_pdb_file(residues_true, "true.pdb")
+# sequence_true_name = []
+# for i in s_true.tolist():
+#     sequence_true_name.append(amino_acids[i])
 
-from vispdb import visualize_ribbon_pdb
+# residues_true=[]
+# coords = coords.detach().to("cpu").squeeze(0).numpy()
+# for i in range(len(sequence_true_name)):
+#     temp = {}
+#     temp['name'] = sequence_true_name[i]
+#     temp['CA'] = coords[i][:3].tolist()
+#     temp['CB'] = coords[i][3:6].tolist()
+#     temp['CN'] = coords[i][6:].tolist()
+#     residues_true.append(temp)
 
-# visualize_ribbon_pdb('0.pdb')
-visualize_ribbon_pdb('true.pdb')
+# create_pdb_file(residues_true, "gen/true.pdb")
+
+
+# from vispdb import visualize_ribbon_pdb
+
+# # visualize_ribbon_pdb('0.pdb')
+# visualize_ribbon_pdb('true.pdb')
