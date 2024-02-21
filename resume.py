@@ -38,7 +38,7 @@ def plotter(esp_pred, eps, c_0, c_denoised,p_noisy,p_0):
     # g_CA_coords
     axs[0][0].plot(array1[0], color='r', label='pred')
     axs[0][0].plot(array2[0], color='b', label='eps')
-    # axs[0][0].plot(array3[0], color='g', label='p_noisy')
+    axs[0][0].plot(array3[0], color='g', label='p_noisy')
     # axs[0][0].plot(array4[0], color='y', label='p_0')
     
     # Add legend
@@ -77,12 +77,12 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, default="train.yml")
     parser.add_argument('--logdir', type=str, default='./logs')
     parser.add_argument('--debug', action='store_true', default=False)
-    parser.add_argument('--device', type=str, default='cuda')
+    parser.add_argument('--device', type=str, default='cpu')
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--tag', type=str, default='')
 
     parser.add_argument('--name', type=str, default="")
-    parser.add_argument('--layers', type=int, default=40)
+    parser.add_argument('--layers', type=int, default=100)
     parser.add_argument('--add_layers', type=int, default=0)
     parser.add_argument('--uni', type=str, default=None)
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/hybridmodel_logs/logs/40_3/checkpoints/280.pt"
+    args.resume="D:/Thesis/Enzymix/logs/train_2024_02_22__01_28_55_layers_100_add_layers_0/checkpoints/15.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -189,11 +189,11 @@ if __name__ == '__main__':
     #     test_one(args.uni)
     # else:
     #     for i in dataset.paths:
-    t = torch.randint(1, 10, (1,), dtype=torch.long)
+    t = torch.randint(1, 100, (1,), dtype=torch.long)
     test_one(dataset.paths[0],t)
-    t = torch.randint(45, 55, (1,), dtype=torch.long)
+    t = torch.randint(450, 550, (1,), dtype=torch.long)
     test_one(dataset.paths[0],t)
-    t = torch.randint(90, 100, (1,), dtype=torch.long)
+    t = torch.randint(900, 1000, (1,), dtype=torch.long)
     test_one(dataset.paths[0],t)
     
 
