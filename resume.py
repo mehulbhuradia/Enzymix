@@ -38,7 +38,7 @@ def plotter(esp_pred, eps, c_0, c_denoised,p_noisy,p_0):
     # g_CA_coords
     axs[0][0].plot(array1[0], color='r', label='pred')
     axs[0][0].plot(array2[0], color='b', label='eps')
-    axs[0][0].plot(array3[0], color='g', label='p_noisy')
+    # axs[0][0].plot(array3[0], color='g', label='p_noisy')
     # axs[0][0].plot(array4[0], color='y', label='p_0')
     
     # Add legend
@@ -47,7 +47,7 @@ def plotter(esp_pred, eps, c_0, c_denoised,p_noisy,p_0):
     # g_CA_coords
     axs[1][0].plot(array1[1], color='r', label='pred')
     axs[1][0].plot(array2[1], color='b', label='eps')
-    axs[1][0].plot(array3[1], color='g', label='p_noisy')
+    # axs[1][0].plot(array3[1], color='g', label='p_noisy')
     # axs[1][0].plot(array4[1], color='y', label='p_0')
     
     # Add legend
@@ -56,7 +56,7 @@ def plotter(esp_pred, eps, c_0, c_denoised,p_noisy,p_0):
     # g_CA_coords
     axs[0][1].plot(array1[2], color='r', label='pred')
     axs[0][1].plot(array2[2], color='b', label='eps')
-    axs[0][1].plot(array3[2], color='g', label='p_noisy')
+    # axs[0][1].plot(array3[2], color='g', label='p_noisy')
     # axs[0][1].plot(array4[2], color='y', label='p_0')
 
     # Add legend
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/logs/train_2024_02_15__19_55_46complex_test_layers_40_add_layers_0/checkpoints/5.pt"
+    args.resume="D:/Thesis/Enzymix/hybridmodel_logs/logs/40_3/checkpoints/280.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -140,10 +140,10 @@ if __name__ == '__main__':
     model.load_state_dict(ckpt['model'])
 
 
-    def test_one(uniprotid):
+    def test_one(uniprotid,t):
         with torch.no_grad():
             model.eval()
-            t = torch.randint(50, 60, (1,), dtype=torch.long)
+            
             coords, one_hot, edges, path = dataset.get_item_by_uniprotid(uniprotid)
             
             coords=coords.unsqueeze(0).to(args.device)
@@ -185,9 +185,15 @@ if __name__ == '__main__':
             if not torch.isfinite(loss):
                 print('NaN or Inf detected.')
         
-    if args.uni:
-        test_one(args.uni)
-    else:
-        for i in dataset.paths:
-            test_one(i)
+    # if args.uni:
+    #     test_one(args.uni)
+    # else:
+    #     for i in dataset.paths:
+    t = torch.randint(1, 10, (1,), dtype=torch.long)
+    test_one(dataset.paths[0],t)
+    t = torch.randint(45, 55, (1,), dtype=torch.long)
+    test_one(dataset.paths[0],t)
+    t = torch.randint(90, 100, (1,), dtype=torch.long)
+    test_one(dataset.paths[0],t)
+    
 
