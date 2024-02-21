@@ -18,8 +18,8 @@ class ProtienStructuresDataset(Dataset):
     file_path=self.paths[idx]
     with open(file_path, 'r') as file:
       data = json.load(file)
-    coords=torch.tensor(data['coords'], dtype=torch.float64)
-    one_hot=torch.tensor(data['one_hot'], dtype=torch.float64)
+    coords=torch.tensor(data['coords'], dtype=torch.float32)
+    one_hot=torch.tensor(data['one_hot'], dtype=torch.float32)
     edges=[]
     for e in data['edges']:
       edges.append(torch.tensor(e, dtype=torch.int64))
