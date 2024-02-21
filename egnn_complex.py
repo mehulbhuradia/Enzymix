@@ -45,14 +45,14 @@ class E_GCL(nn.Module):
         self.node_mlp = nn.Sequential(*node_mlp_layers)
 
         coord_mlp_layers = []
-        coord_mlp_layers.append(nn.Linear(hidden_nf, hidden_nf))
+        coord_mlp_layers.append(nn.Linear(hidden_nf, x_dim*x_dim))
         coord_mlp_layers.append(act_fn)
 
-        layer = nn.Linear(hidden_nf, x_dim*x_dim) #used to have bias=False
+        layer = nn.Linear(x_dim*x_dim, x_dim*x_dim) #used to have bias=False
         torch.nn.init.xavier_uniform_(layer.weight, gain=0.001) # important for some reason, code breaks when i remove it
 
         for i in range(additional_layers):
-            coord_mlp_layers.append(nn.Linear(hidden_nf, hidden_nf))
+            coord_mlp_layers.append(nn.Linear(x_dim*x_dim, x_dim*x_dim))
             coord_mlp_layers.append(act_fn)
         coord_mlp_layers.append(layer)
         
