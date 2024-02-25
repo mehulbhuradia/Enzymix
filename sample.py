@@ -102,7 +102,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/hybridmodel_logs/logs/40_3/checkpoints/280.pt"
+    args.resume="D:/Thesis/Enzymix/logs/train_2024_02_23__08_40_33t1k_layers_40_add_layers_0/checkpoints/45.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -179,7 +179,7 @@ def make_pdb(traj,count,num=None):
         temp['CB'] = position_0[i][3:6].tolist()
         temp['CN'] = position_0[i][6:].tolist()
         residues_0.append(temp)
-        create_pdb_file(residues_0, "traj/"+str(num)+".pdb")
+    create_pdb_file(residues_0, "traj/"+str(num)+".pdb")
     
 
 
@@ -208,7 +208,7 @@ def make_pdb(traj,count,num=None):
    
 count = 0
 for i in dataset.paths:
-    if "150" in i.split("_")[-1]:
+    if "50" in i.split("_")[-1]:
         count+=1
         try:
             traj,coords,s_true = sample_one(i)
@@ -223,21 +223,21 @@ for i in dataset.paths:
 #     traj,coords,s_true = sample_one(dataset.paths[19])
 #     make_pdb(traj,i)
 
-# sequence_true_name = []
-# for i in s_true.tolist():
-#     sequence_true_name.append(amino_acids[i])
+sequence_true_name = []
+for i in s_true.tolist():
+    sequence_true_name.append(amino_acids[i])
 
-# residues_true=[]
-# coords = coords.detach().to("cpu").squeeze(0).numpy()
-# for i in range(len(sequence_true_name)):
-#     temp = {}
-#     temp['name'] = sequence_true_name[i]
-#     temp['CA'] = coords[i][:3].tolist()
-#     temp['CB'] = coords[i][3:6].tolist()
-#     temp['CN'] = coords[i][6:].tolist()
-#     residues_true.append(temp)
+residues_true=[]
+coords = coords.detach().to("cpu").squeeze(0).numpy()
+for i in range(len(sequence_true_name)):
+    temp = {}
+    temp['name'] = sequence_true_name[i]
+    temp['CA'] = coords[i][:3].tolist()
+    temp['CB'] = coords[i][3:6].tolist()
+    temp['CN'] = coords[i][6:].tolist()
+    residues_true.append(temp)
 
-# create_pdb_file(residues_true, "gen/true.pdb")
+create_pdb_file(residues_true, "true.pdb")
 
 
 # from vispdb import visualize_ribbon_pdb

@@ -40,7 +40,8 @@ def save_image_from_pdb(input_pdb):
     # Quit PyMOL
     cmd.quit()
 
-
+visualize_ribbon_pdb('traj/0.pdb')
+# visualize_ribbon_pdb('true.pdb')
 # visualize_ribbon_pdb('gen/3.pdb')
 # visualize_ribbon_pdb('gen/4.pdb')
 # visualize_ribbon_pdb('gen/6.pdb')

@@ -13,7 +13,7 @@ class FullDPM(nn.Module):
     def __init__(
         self, 
         in_node_nf =23, 
-        hidden_nf=81,
+        hidden_nf=23,
         out_node_nf=20,
         num_steps=1000, 
         n_layers=4, 
@@ -148,7 +148,7 @@ class FullDPM(nn.Module):
         if sample_structure:
             p_rand = torch.randn_like(p)
             # Add noise to positions
-            # p_rand, eps_p = self.trans_pos.add_noise(p, mask_generate, 1)
+            # p_rand, eps_p = self.trans_pos.add_noise(p, mask_generate, 50)
             p_init = torch.where(mask_generate[:, :, None].expand_as(p), p_rand, p)
         else:
             p_init = p
