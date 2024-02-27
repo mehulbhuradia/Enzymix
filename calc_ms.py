@@ -4,18 +4,18 @@ from tqdm.auto import tqdm
 import torch
 
 # Initialize variables to keep track of the running sum and squared sum
-running_sum = torch.zeros(9)
-running_squared_sum = torch.zeros(9)
+running_sum = torch.zeros(3)
+running_squared_sum = torch.zeros(3)
 count = 0
-running_max = torch.zeros(9) - float('inf')
-running_min = torch.zeros(9) + float('inf')
+running_max = torch.zeros(3) - float('inf')
+running_min = torch.zeros(3) + float('inf')
 
 
 
-dataset = ProtienStructuresDataset(path="./brenda_processed", max_len=600)
+dataset = ProtienStructuresDataset(path="./brenda_processed", max_len=300)
 
 for i in tqdm(range(len(dataset))):
-    coords, one_hot, edges, path = dataset[i]
+    coords, one_hot, edges, path, o = dataset[i]
     count += coords.shape[0]
     running_sum += torch.sum(coords, dim=0)
     running_squared_sum += torch.sum(coords ** 2, dim=0)

@@ -162,8 +162,9 @@ class EGNN(nn.Module):
         self.n_layers = n_layers
         self.embedding_in = []
         self.embedding_out = []
+        self.add_module("in_linear_layer", nn.Linear(in_node_nf, self.hidden_nf))
         for i in range(0, n_layers):
-            self.add_module("in_linear_layer_%d" % i, nn.Linear(in_node_nf, self.hidden_nf))
+            
             # if i < 2:
             #     additional_layers=24
             # else:
@@ -171,21 +172,15 @@ class EGNN(nn.Module):
             self.add_module("gcl_%d" % i, E_GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=in_edge_nf,x_dim=x_dim,
                                                 act_fn=act_fn, residual=residual, attention=attention,
                                                 normalize=normalize, tanh=tanh,additional_layers=additional_layers))
-            self.add_module("out_linear_layer_%d" % i, nn.Linear(self.hidden_nf, out_node_nf))
+        self.add_module("out_linear_layer", nn.Linear(self.hidden_nf, out_node_nf))
         self.to(self.device)
 
     def forward(self, h, x, t, edges, edge_attr):
+        h = torch.cat((h, t), dim=1)
+        h = self._modules["in_linear_layer"](h)
         for i in range(0, self.n_layers):
-            h = torch.cat((h, t), dim=1)
-            h = self._modules["in_linear_layer_%d" % i](h)
-            # x_copy = x.detach().clone()
             h, x, _ = self._modules["gcl_%d" % i](h, edges, x, edge_attr=edge_attr)
-            
-            if (torch.isnan(x).any().item()):
-                print("NAN in x at layer %d" % i)
-                # print(x_copy)
-                raise KeyboardInterrupt()
-            h = self._modules["out_linear_layer_%d" % i](h)
+        h = self._modules["out_linear_layer"](h)
         return h, x
 
 

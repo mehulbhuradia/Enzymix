@@ -12,12 +12,12 @@ class FullDPM(nn.Module):
 
     def __init__(
         self, 
-        in_node_nf =23, 
-        hidden_nf=23,
+        in_node_nf =26, 
+        hidden_nf=26,
         out_node_nf=20,
         num_steps=1000, 
         n_layers=4, 
-        x_dim =9,
+        x_dim =3,
         additional_layers=0,
         trans_pos_opt={}, 
         trans_seq_opt={},
@@ -32,8 +32,8 @@ class FullDPM(nn.Module):
 
         # self.register_buffer('position_scale', torch.FloatTensor(position_scale).view(1, 1, -1))
         self.register_buffer('_dummy', torch.empty([0, ]))
-        mean = torch.tensor([-0.7497,  0.5599, -0.2493, -0.7673,  0.5536, -0.2367, -0.7379,  0.5644, -0.2577])
-        std = torch.tensor([14.9381, 12.4760, 15.7061, 14.9017, 12.4261, 15.6763, 14.9080, 12.4432, 15.6748])
+        mean = torch.tensor([-0.5488,  0.3349, -0.4913])
+        std = torch.tensor([11.0025,  7.8602, 12.2983])
         self.register_buffer('mean', torch.FloatTensor(mean))
         self.register_buffer('std', torch.FloatTensor(std))
 
@@ -45,7 +45,7 @@ class FullDPM(nn.Module):
         p = p_norm * self.std + self.mean
         return p
 
-    def forward(self, p_0, c_0, e, t=None,analyse=False):
+    def forward(self, p_0, c_0, e,o, t=None,analyse=False):
         # L is sequence length, N is 1
         # p_0: (N, L, 3) coordinates
         # c_0: (N, L, 20) one-hot encoding of amino acid sequence
@@ -72,7 +72,9 @@ class FullDPM(nn.Module):
         # Add noise to sequence
         s_0=self.trans_seq._sample(c_0) # c_0 should be N,L,20
         c_noisy, s_noisy = self.trans_seq.add_noise(s_0, mask_generate, t)
-        
+
+        c_noisy = torch.cat((c_noisy, o),dim=-1)
+
         beta = self.trans_pos.var_sched.betas[t]
 
         p_noisy = p_noisy.squeeze(0) # L,3
@@ -83,7 +85,7 @@ class FullDPM(nn.Module):
         c_0=c_0.squeeze(0) # L,20
     
         t_embed = torch.stack([beta, torch.sin(beta), torch.cos(beta)], dim=-1)[:, None, :].squeeze(0).expand(L, 3) # (L, 3)
-            
+        
         c_denoised , eps_pred = self.eps_net(h=c_noisy, x=p_noisy.clone().detach(), t=t_embed, edges=edges, edge_attr=None) #(L x 23), (L x 3)
         
         # Softmax
