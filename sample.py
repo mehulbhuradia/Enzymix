@@ -102,7 +102,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/train_2024_02_23__08_40_33t1k_layers_40_add_layers_0/checkpoints/45.pt"
+    args.resume="D:/Thesis/Enzymix/atom_logs/logs/train_2024_02_27__02_59_00atoms_layers_40_add_layers_0/checkpoints/35.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -148,15 +148,15 @@ if __name__ == '__main__':
     model.load_state_dict(ckpt['model'])
 
 
-def sample_one(uniprotid):
+def sample_one(i):
     model.eval()
-    print(f"Sampling from {uniprotid}")
-    coords, one_hot, edges, path = dataset.get_item_by_uniprotid(uniprotid)
+    print(f"Sampling from {i}")
+    coords, one_hot, edges, path, o = dataset.__getitem__(i)
     coords=coords.unsqueeze(0).to(args.device)
     one_hot=one_hot.unsqueeze(0).to(args.device)
     edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
-
-    traj = model.sample(coords, one_hot, edges, pbar=True, sample_structure=True, sample_sequence=True)
+    o=o.unsqueeze(0).to(args.device)
+    traj = model.sample(coords, one_hot, edges,o, pbar=True, sample_structure=True, sample_sequence=True)
     return traj,coords,model.trans_seq._sample(one_hot).squeeze(0)
 
 
@@ -181,7 +181,7 @@ def make_pdb(traj,count,num=None):
         residues_0.append(temp)
     create_pdb_file(residues_0, "traj/"+str(num)+".pdb")
     
-
+sample_one(0)
 
 # count = 0
 # for i in dataset.paths:
@@ -206,38 +206,39 @@ def make_pdb(traj,count,num=None):
 #         except:
 #             continue
    
-count = 0
-for i in dataset.paths:
-    if "50" in i.split("_")[-1]:
-        count+=1
-        try:
-            traj,coords,s_true = sample_one(i)
-            for i in range(100):
-                make_pdb(traj,count,i)
-            break
-        except:
-            continue
+# count = 0
+# for i in dataset.paths:
+    
+    # if "50" in i.split("_")[-1]:
+    #     count+=1
+    #     try:
+    #         traj,coords,s_true = sample_one(i)
+    #         for i in range(100):
+    #             make_pdb(traj,count,i)
+    #         break
+    #     except:
+    #         continue
 
 
 # for i in range(20):
 #     traj,coords,s_true = sample_one(dataset.paths[19])
 #     make_pdb(traj,i)
 
-sequence_true_name = []
-for i in s_true.tolist():
-    sequence_true_name.append(amino_acids[i])
+# sequence_true_name = []
+# for i in s_true.tolist():
+#     sequence_true_name.append(amino_acids[i])
 
-residues_true=[]
-coords = coords.detach().to("cpu").squeeze(0).numpy()
-for i in range(len(sequence_true_name)):
-    temp = {}
-    temp['name'] = sequence_true_name[i]
-    temp['CA'] = coords[i][:3].tolist()
-    temp['CB'] = coords[i][3:6].tolist()
-    temp['CN'] = coords[i][6:].tolist()
-    residues_true.append(temp)
+# residues_true=[]
+# coords = coords.detach().to("cpu").squeeze(0).numpy()
+# for i in range(len(sequence_true_name)):
+#     temp = {}
+#     temp['name'] = sequence_true_name[i]
+#     temp['CA'] = coords[i][:3].tolist()
+#     temp['CB'] = coords[i][3:6].tolist()
+#     temp['CN'] = coords[i][6:].tolist()
+#     residues_true.append(temp)
 
-create_pdb_file(residues_true, "true.pdb")
+# create_pdb_file(residues_true, "true.pdb")
 
 
 # from vispdb import visualize_ribbon_pdb

@@ -126,6 +126,7 @@ class FullDPM(nn.Module):
         p, 
         c, 
         e,
+        o,
         sample_structure=True, sample_sequence=True,
         pbar=False,
     ):
@@ -176,6 +177,8 @@ class FullDPM(nn.Module):
             t_embed = torch.stack([beta, torch.sin(beta), torch.cos(beta)], dim=-1)[:, None, :].squeeze(0).expand(L, 3) # (L, 3)
             
             c_t = clampped_one_hot(s_t, num_classes=20).float() # (N, L, K).
+
+            c_t = torch.cat((c_t, o),dim=-1)
 
             p_t=p_t.squeeze(0) # L,3
             c_t=c_t.squeeze(0) # L,20        
