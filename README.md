@@ -6,6 +6,12 @@ scp -r processed_500 daic:~/Enzymix/
 <!-- diffab data -->
 scp -r all_structures daic:/tudelft.net/staff-umbrella/Enzymix/diffab/data/
 
+scp -r zipz daic:/tudelft.net/staff-umbrella/Enzymix/LatentDiff/
+
+scp -r LatentDiff daic:/tudelft.net/staff-umbrella/Enzymix/
+
+scp -r af_structures daic:/tudelft.net/staff-umbrella/Enzymix/se3_diffusion/
+
 
 #setup
 module use /opt/insy/modulefiles
@@ -69,3 +75,8 @@ slurmstepd: error: Detected 1 oom-kill event(s) in StepId=9209586.batch. Some of
         # print("pin",p_noisy[0,0])
         #  todo figure out hy its the same?
 didnt work cuz x was being changed
+
+for /L %i in (0, 1, 1000) do python visall.py --n %i
+
+conda env create -f se3.yml --prefix ./se3
+

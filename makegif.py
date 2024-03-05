@@ -10,8 +10,8 @@ import os
 # print(image_files)
 
 image_files=[]
-for i in range(100):
-    image_files.append("traj/img/"+str(i)+".png")
+for i in range(1000):
+    image_files.append("traj/"+str(i)+".png")
 image_files.reverse()
 print(image_files)
 

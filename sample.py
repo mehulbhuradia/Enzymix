@@ -161,10 +161,12 @@ def sample_one(i):
 
 
 
-def make_pdb(traj,count,num=None):
+def make_pdb(traj,num=0):
     sequence_0=traj[num][1].squeeze(0)
+    sequence_0,_,_=torch.chunk(sequence_0, chunks=3, dim=-1)
     position_0=traj[num][0]
-    # plotter(position_100, position_0, coords)
+    g_CA_coords,g_C_coords,g_N_coords = torch.chunk(position_0, chunks=3, dim=-2)
+    position_0 = torch.cat((g_CA_coords,g_C_coords,g_N_coords),dim=-1)
     position_0 = position_0.detach().to("cpu").squeeze(0).numpy()
 
     sequence_0_name = []
@@ -181,7 +183,12 @@ def make_pdb(traj,count,num=None):
         residues_0.append(temp)
     create_pdb_file(residues_0, "traj/"+str(num)+".pdb")
     
-sample_one(0)
+
+traj,coords,s_true = sample_one(0)
+for i in range(len(traj)):
+    make_pdb(traj,i)
+
+
 
 # count = 0
 # for i in dataset.paths:
