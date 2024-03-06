@@ -106,20 +106,20 @@ class EGNN(nn.Module):
         self.hidden_nf = hidden_nf
         self.device = device
         self.n_layers = n_layers
-        self.embedding_in = nn.Linear(in_node_nf, self.hidden_nf)
-        self.embedding_out = nn.Linear(self.hidden_nf, out_node_nf)
         for i in range(0, n_layers):
+            self.add_module("embedding_in_%d" % i, nn.Linear(in_node_nf, self.hidden_nf))
             self.add_module("gcl_%d" % i, E_GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=in_edge_nf,
                                                 act_fn=act_fn, residual=residual, attention=attention,
                                                 normalize=normalize, tanh=tanh,additional_layers=additional_layers))
+            self.add_module("embedding_out_%d" % i, nn.Linear(self.hidden_nf, out_node_nf))
         self.to(self.device)
 
     def forward(self, h, t, edges):
-        h = torch.cat((h, t), dim=1)
-        h = self.embedding_in(h)
         for i in range(0, self.n_layers):
+            h = torch.cat((h, t), dim=1)
+            h = self._modules["embedding_in_%d" % i](h)
             h,_ = self._modules["gcl_%d" % i](h, edges)
-        h = self.embedding_out(h)
+            h = self._modules["embedding_out_%d" % i](h)
         return h
 
 
