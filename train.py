@@ -27,7 +27,7 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--resume', type=str, default=None)
     parser.add_argument('--name', type=str, default="")
-    parser.add_argument('--layers', type=int, default=20)
+    parser.add_argument('--layers', type=int, default=10)
     parser.add_argument('--add_layers', type=int, default=0)
 
 
@@ -111,8 +111,6 @@ if __name__ == '__main__':
         model.train()
         avg_loss = {}
         avg_loss['overall'] = 0
-        # avg_loss['rot'] = 0
-        avg_loss['pos'] = 0
         avg_loss['seq'] = 0
         avg_forward_time = 0
         avg_backward_time = 0
@@ -121,15 +119,11 @@ if __name__ == '__main__':
         for i,x in enumerate(tqdm(train_loader, desc='Training Epoch: '+str(it), dynamic_ncols=True)):
             time_start = current_milli_time()
             x = recursive_to(x, args.device)
-
-            # Forward
-            # if args.debug: torch.set_anomaly_enabled(True)
-
-            loss_dict = model(x[0], x[1], x[2], x[4])
+            
+            loss_dict = model(x[0], x[1])
             loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
             loss_dict['overall'] = loss
             time_forward_end = current_milli_time()
-
 
             if not torch.isfinite(loss):
                 logger.error('NaN or Inf detected.')
@@ -148,8 +142,6 @@ if __name__ == '__main__':
             time_backward_end = current_milli_time()
 
             avg_loss['overall'] += loss_dict['overall']
-            # avg_loss['rot'] += loss_dict['rot']
-            avg_loss['pos'] += loss_dict['pos']
             avg_loss['seq'] += loss_dict['seq']
 
             avg_forward_time += (time_forward_end - time_start)
@@ -161,9 +153,7 @@ if __name__ == '__main__':
                 optimizer.step()
                 optimizer.zero_grad()
             
-        avg_loss['overall'] /= number_of_samples
-        # avg_loss['rot'] /= number_of_samples
-        avg_loss['pos'] /= number_of_samples
+        avg_loss['overall'] /= number_of_samples        
         avg_loss['seq'] /= number_of_samples
         avg_forward_time /= number_of_samples
         avg_backward_time /= number_of_samples
@@ -172,11 +162,8 @@ if __name__ == '__main__':
 
     # Validate
     def validate(it):
-        loss_tape = ValidationLossTape()
         avg_loss = {}
         avg_loss['overall'] = 0
-        # avg_loss['rot'] = 0
-        avg_loss['pos'] = 0
         avg_loss['seq'] = 0
         number_of_samples = len(val_loader)
         with torch.no_grad():
@@ -185,13 +172,12 @@ if __name__ == '__main__':
                 # Prepare data
                 x = recursive_to(x, args.device)
                 # Forward
-                loss_dict = model(x[0], x[1], x[2], x[4])
+                loss_dict = model(x[0], x[1])
                 loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
                 loss_dict['overall'] = loss
                 # Accumulate
                 avg_loss['overall'] += loss_dict['overall']
-                # avg_loss['rot'] += loss_dict['rot']
-                avg_loss['pos'] += loss_dict['pos']
+                
                 avg_loss['seq'] += loss_dict['seq']
         
         # Trigger scheduler
@@ -201,8 +187,7 @@ if __name__ == '__main__':
             scheduler.step()
 
         avg_loss['overall'] /= number_of_samples
-        # avg_loss['rot'] /= number_of_samples
-        avg_loss['pos'] /= number_of_samples
+        
         avg_loss['seq'] /= number_of_samples
 
         return avg_loss

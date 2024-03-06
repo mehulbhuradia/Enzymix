@@ -19,17 +19,7 @@ class ProtienStructuresDataset(Dataset):
     file_path=self.paths[idx]
     with open(file_path, 'r') as file:
       data = json.load(file)
-    coords=torch.tensor(data['coords'], dtype=torch.float32)
     one_hot=torch.tensor(data['one_hot'], dtype=torch.float32)
-    g_CA_coords,g_C_coords,g_N_coords = torch.chunk(coords, chunks=3, dim=-1)
-    stacked_tensor = torch.cat((g_CA_coords,g_C_coords,g_N_coords),dim=-2)
-    edges,_=get_edges_batch(stacked_tensor.shape[0],1)
-    one_hot_CA = torch.tensor([1, 0, 0]).unsqueeze(0).expand(one_hot.shape[-2],-1)
-    one_hot_C = torch.tensor([0, 1, 0]).unsqueeze(0).expand(one_hot.shape[-2],-1)
-    one_hot_N = torch.tensor([0, 0, 1]).unsqueeze(0).expand(one_hot.shape[-2],-1)
-    # one_hot_CA = torch.cat((one_hot,one_hot_CA),dim=-1)
-    # one_hot_C = torch.cat((one_hot,one_hot_C),dim=-1)
-    # one_hot_N = torch.cat((one_hot,one_hot_N),dim=-1)
-    one_hot = torch.cat((one_hot,one_hot,one_hot),dim=-2)
-    one_hot_atoms = torch.cat((one_hot_CA,one_hot_C,one_hot_N),dim=-2)
-    return stacked_tensor, one_hot, edges, file_path, one_hot_atoms
+    e,_=get_edges_batch(one_hot.shape[0],1)
+    edges = torch.stack((e[0],e[1]))
+    return one_hot, edges
