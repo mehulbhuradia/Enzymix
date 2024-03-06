@@ -84,56 +84,57 @@ class FullDPM(nn.Module):
         return loss_dict
   
     
-    # @torch.no_grad()
-    # def sample(
-    #     self, 
-    #     c, 
-    #     e
-    # ):
-    #     # L is sequence length, N is 1
-    #     # c_0: (N, L, 20) one-hot encoding of amino acid sequence
-    #     # e: [(N, L), (N, L)] edge list
+    @torch.no_grad()
+    def sample(
+        self, 
+        c, 
+        e
+    ):
+        # L is sequence length, N is 1
+        # c_0: (N, L, 20) one-hot encoding of amino acid sequence
+        # e: [(N, L), (N, L)] edge list
 
-    #     edges=e.squeeze(0)
+        edges=[]
+        for edge in e:
+            edges.append(edge.squeeze(0))
+        
 
-    #     N, L = c.shape[:2]
+        N, L = c.shape[:2]
 
-    #     mask_generate = torch.full((N,L), True, dtype=torch.bool, device = p.device) #or 0s?
+        mask_generate = torch.full((N,L), True, dtype=torch.bool, device = c.device) #or 0s?
          
-    #     s=self.trans_seq._sample(c) # c_0 should be N,L,20
+        s=self.trans_seq._sample(c) # c_0 should be N,L,20
 
-
-    #     s_rand = torch.randint_like(s, low=0, high=19)
-    #     s_init = torch.where(mask_generate, s_rand, s)
+        s_rand = torch.randint_like(s, low=0, high=19)
+        s_init = torch.where(mask_generate, s_rand, s)
     
 
-    #     traj = {self.num_steps: s_init}
+        traj = {self.num_steps: s_init}
         
-    #     pbar = functools.partial(tqdm, total=self.num_steps, desc='Sampling')
+        pbar = functools.partial(tqdm, total=self.num_steps, desc='Sampling')
         
-    #     for t in pbar(range(self.num_steps, 0, -1)):
-    #         s_t = traj[t]
+        for t in pbar(range(self.num_steps, 0, -1)):
+            s_t = traj[t]
             
-    #         t_tensor = torch.full([N, ], fill_value=t, dtype=torch.long, device=self._dummy.device)
+            t_tensor = torch.full([N, ], fill_value=t, dtype=torch.long, device=self._dummy.device)
 
-    #         beta = self.trans_seq.var_sched.betas[t].expand([N, ])
-    #         t_embed = torch.stack([beta, torch.sin(beta), torch.cos(beta)], dim=-1)[:, None, :].squeeze(0).expand(L, 3) # (L, 3)
+            beta = self.trans_seq.var_sched.betas[t].expand([N, ])
+            t_embed = torch.stack([beta, torch.sin(beta), torch.cos(beta)], dim=-1)[:, None, :].squeeze(0).expand(L, 3) # (L, 3)
             
-    #         c_t = clampped_one_hot(s_t, num_classes=20).float() # (N, L, K).
+            c_t = clampped_one_hot(s_t, num_classes=20).float() # (N, L, K).
 
             
-    #         c_t=c_t.squeeze(0) # L,20        
+            c_t=c_t.squeeze(0) # L,20        
     
-    #         c_denoised = self.eps_net(h=c_t,  t=t_embed, edges=edges) 
+            c_denoised = self.eps_net(h=c_t,  t=t_embed, edges=edges) 
 
-    #         # Softmax
-    #         c_denoised = F.softmax(c_denoised, dim=-1)        
-    #         c_denoised = c_denoised.unsqueeze(0) # (1, L, 20)
-            
-            
-    #         _, s_next = self.trans_seq.denoise(s_t, c_denoised, mask_generate, t_tensor)
+            # Softmax
+            c_denoised = F.softmax(c_denoised, dim=-1)        
+            c_denoised = c_denoised.unsqueeze(0) # (1, L, 20)
 
-    #         traj[t-1] = s_next
-    #         traj[t] = tuple(x.cpu() for x in traj[t])    # Move previous states to cpu memory.
+            _, s_next = self.trans_seq.denoise(s_t, c_denoised, mask_generate, t_tensor)
 
-    #     return traj
+            traj[t-1] = s_next
+            traj[t] = tuple(x.cpu() for x in traj[t])    # Move previous states to cpu memory.
+
+        return traj

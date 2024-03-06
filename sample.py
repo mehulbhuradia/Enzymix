@@ -55,12 +55,10 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--tag', type=str, default='')
-
     parser.add_argument('--name', type=str, default="")
-    parser.add_argument('--layers', type=int, default=40)
-    parser.add_argument('--add_layers', type=int, default=0)
+    parser.add_argument('--layers', type=int, default=2)
+    parser.add_argument('--add_layers', type=int, default=24)
     parser.add_argument('--uni', type=str, default=None)
-
 
     args = parser.parse_args()
 
@@ -68,7 +66,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/atom_logs/logs/train_2024_02_27__02_59_00atoms_layers_40_add_layers_0/checkpoints/35.pt"
+    args.resume="D:/Thesis/Enzymix/logs/s/checkpoints/5.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -119,35 +117,11 @@ def sample_one(i):
     print(f"Sampling from {i}")
     one_hot, edges= dataset.__getitem__(i)
     one_hot=one_hot.unsqueeze(0).to(args.device)
-    edges = edges.unsqueeze(0).to(args.device) 
+    edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
     traj = model.sample(one_hot, edges)
     return traj,model.trans_seq._sample(one_hot).squeeze(0)
 
 
-def make_pdb(traj,num=0):
-    sequence_0=traj[num][1].squeeze(0)
-    sequence_0,_,_=torch.chunk(sequence_0, chunks=3, dim=-1)
-    position_0=traj[num][0]
-    g_CA_coords,g_C_coords,g_N_coords = torch.chunk(position_0, chunks=3, dim=-2)
-    position_0 = torch.cat((g_CA_coords,g_C_coords,g_N_coords),dim=-1)
-    position_0 = position_0.detach().to("cpu").squeeze(0).numpy()
+traj,s_true = sample_one(0)
 
-    sequence_0_name = []
-    for i in sequence_0.tolist():
-        sequence_0_name.append(amino_acids[i])
-
-    residues_0=[]
-    for i in range(len(sequence_0_name)):
-        temp = {}
-        temp['name'] = sequence_0_name[i]
-        temp['CA'] = position_0[i][:3].tolist()
-        temp['CB'] = position_0[i][3:6].tolist()
-        temp['CN'] = position_0[i][6:].tolist()
-        residues_0.append(temp)
-    create_pdb_file(residues_0, "traj/"+str(num)+".pdb")
-    
-
-traj,coords,s_true = sample_one(0)
-for i in range(len(traj)):
-    make_pdb(traj,i)
-
+print(traj[0])
