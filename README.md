@@ -82,6 +82,10 @@ conda env create -f se3.yml --prefix ./se3
 
 9651725: gat
 slurm-9651732.out: linear 10
-9651738 linear 20
+slurm-9651731.out: linear 10
 
+
+Long jobs:
+9651738 linear 20
 important:9651778: gcl
+9652891: gcl t long -i will use
