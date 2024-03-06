@@ -5,24 +5,24 @@ import functools
 from tqdm.auto import tqdm
 from diffab.modules.diffusion.transition import PositionTransition, AminoacidCategoricalTransition
 from diffab.modules.common.layers import clampped_one_hot
-import egnn_complex as eg
-from gacnn import GACNN
+from egnn_clean import EGNN
+# from gacnn import GACNN
 
 class FullDPM(nn.Module):
 
     def __init__(
         self, 
         in_node_nf =23, 
-        hidden_nf=100,
+        hidden_nf=23,
         out_node_nf=20,
         num_steps=100, 
         n_layers=4, 
-        additional_layers=0,
+        additional_layers=24,
         trans_seq_opt={},
     ):
         super().__init__()
         
-        self.eps_net = GACNN(in_node_nf=in_node_nf, hidden_nf=hidden_nf, out_node_nf=out_node_nf,n_layers=n_layers)
+        self.eps_net = EGNN(in_node_nf=in_node_nf, hidden_nf=hidden_nf, out_node_nf=out_node_nf,n_layers=n_layers,additional_layers=additional_layers)
         self.num_steps = num_steps
 
         self.trans_seq = AminoacidCategoricalTransition(num_steps, **trans_seq_opt)
@@ -36,7 +36,9 @@ class FullDPM(nn.Module):
         # c_0: (N, L, 20) one-hot encoding of amino acid sequence
         # e: [(N, L), (N, L)] edge list
         
-        edges=e.squeeze(0)
+        edges=[]
+        for edge in e:
+            edges.append(edge.squeeze(0))
         
         N, L = c_0.shape[:2]
 

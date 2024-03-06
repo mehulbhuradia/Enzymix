@@ -20,6 +20,7 @@ class ProtienStructuresDataset(Dataset):
     with open(file_path, 'r') as file:
       data = json.load(file)
     one_hot=torch.tensor(data['one_hot'], dtype=torch.float32)
-    e,_=get_edges_batch(one_hot.shape[0],1)
-    edges = torch.stack((e[0],e[1]))
+    edges=[]
+    for e in data['edges']:
+      edges.append(torch.tensor(e, dtype=torch.int64))
     return one_hot, edges
