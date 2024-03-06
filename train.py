@@ -195,7 +195,7 @@ if __name__ == '__main__':
     # Main training loop
     try:
         # Set up early stopping
-        early_stopping = {'counter': 0, 'best_loss': float('inf'), 'best_pos': float('inf'), 'best_seq': float('inf')}
+        early_stopping = {'counter': 0, 'best_loss': float('inf'), 'best_seq': float('inf')}
         max_patience = config.train.early_stop_patience
 
         for it in range(it_first, config.train.max_epochs + 1):
@@ -217,9 +217,8 @@ if __name__ == '__main__':
                 
                 # Check for early stopping
                 # if avg_val_loss['overall'] < early_stopping['best_loss']:
-                if avg_val_loss['pos'] < early_stopping['best_pos'] or avg_val_loss['seq'] < early_stopping['best_seq']:
+                if  avg_val_loss['seq'] < early_stopping['best_seq']:
                     # early_stopping['best_loss'] = avg_val_loss['overall']
-                    early_stopping['best_pos'] = avg_val_loss['pos']
                     early_stopping['best_seq'] = avg_val_loss['seq']
                     early_stopping['counter'] = 0
                     if not args.debug:
