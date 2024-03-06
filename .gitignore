@@ -12,3 +12,6 @@ brenda_structures/
 brenda_processed/
 gen/
 traj/
+afjson/
+uniprot_sprot.fasta
+uniprot_sprot.fasta.fai
