@@ -94,3 +94,4 @@ Long jobs:
 important:9651778: gcl
 9652891: gcl t long -i will use
 
+v100 is the only gpu that worked for se3
