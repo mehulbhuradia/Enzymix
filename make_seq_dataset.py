@@ -29,7 +29,7 @@ for protid, seq in tqdm(sequences.items(), desc="Processing Sequences"):
     try:
         sequence = seq[:].seq
         seq_len = len(sequence)
-        if seq_len <= 300:
+        if seq_len <= 300 and seq_len >= 50:
             save_dict = {}
             save_dict['UNIPROT_ID'] = protid
             save_dict['num_nodes'] = seq_len
