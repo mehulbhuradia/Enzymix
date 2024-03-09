@@ -66,7 +66,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/s/checkpoints/5.pt"
+    args.resume="D:/Thesis/Enzymix/logs/s/checkpoints/290.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -124,4 +124,24 @@ def sample_one(i):
 
 traj,s_true = sample_one(0)
 
-print(traj[0])
+# print(traj[0][0])
+
+BASE_AMINO_ACIDS = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
+
+seq_gen=""
+for i in range(0, len(traj[0][0])):
+    seq_gen+=BASE_AMINO_ACIDS[traj[0][0][i]]
+    # print(BASE_AMINO_ACIDS[traj[0][0][i]])
+
+print(seq_gen)
+
+sequence_id = "sequence1"
+
+fasta_content = f">{sequence_id}\n{seq_gen}"
+
+fasta_filename = "output.fasta"
+
+with open(fasta_filename, "w") as fasta_file:
+    fasta_file.write(fasta_content)
+
+print(f"Fasta file '{fasta_filename}' created successfully.")
