@@ -12,6 +12,8 @@ scp -r LatentDiff daic:/tudelft.net/staff-umbrella/Enzymix/
 
 scp -r af_structures daic:/tudelft.net/staff-umbrella/Enzymix/se3_diffusion/
 
+scp -r uniprot_sprot.fasta daic:/tudelft.net/staff-umbrella/Mehul/Enzymix/
+
 
 #setup
 module use /opt/insy/modulefiles
