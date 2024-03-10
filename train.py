@@ -27,8 +27,8 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--resume', type=str, default=None)
     parser.add_argument('--name', type=str, default="")
-    parser.add_argument('--layers', type=int, default=4)
-    parser.add_argument('--add_layers', type=int, default=64)
+    parser.add_argument('--layers', type=int, default=2)
+    parser.add_argument('--add_layers', type=int, default=32)
 
 
     args = parser.parse_args()
@@ -114,6 +114,7 @@ if __name__ == '__main__':
         avg_forward_time = 0
         avg_backward_time = 0
         number_of_samples = len(train_loader)
+        count = 0
 
         for i,x in enumerate(tqdm(train_loader, desc='Training Epoch: '+str(it), dynamic_ncols=True)):
             torch.cuda.empty_cache()
@@ -149,6 +150,10 @@ if __name__ == '__main__':
             orig_grad_norm = clip_grad_norm_(model.parameters(), config.train.max_grad_norm)
             optimizer.step()
             optimizer.zero_grad()
+
+            batch_num = count + (number_of_samples * (it-1))
+            log_losses(loss_dict, batch_num, 'train-batch', logger, writer)  
+            count += 1
             
         avg_loss['overall'] /= number_of_samples
         avg_forward_time /= number_of_samples
@@ -163,6 +168,7 @@ if __name__ == '__main__':
         number_of_samples = len(val_loader)
         with torch.no_grad():
             model.eval()
+            count = 0
             for x in tqdm(val_loader, desc='Validate', dynamic_ncols=True):
                 torch.cuda.empty_cache()
                 # Prepare data
@@ -173,6 +179,9 @@ if __name__ == '__main__':
                 loss_dict['overall'] = loss
                 # Accumulate
                 avg_loss['overall'] += loss_dict['overall']
+                batch_num = count + (number_of_samples * (it-1))
+                log_losses(loss_dict, batch_num, 'val-batch', logger, writer)  
+                count += 1
                 
         # Trigger scheduler
         if config.train.scheduler.type == 'plateau':

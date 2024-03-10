@@ -59,7 +59,9 @@ def log_losses(out, it, tag, logger=BlackHole(), writer=BlackHole(), others={}):
         logstr += ' | loss(%s) %.4f' % (k, v.item())
     for k, v in others.items():
        logstr += ' | %s %2.4f' % (k, v)
-    logger.info(logstr)
+    
+    if not 'batch' in tag:
+        logger.info(logstr)
 
     for k, v in out.items():
         if k == 'overall':
