@@ -4,14 +4,15 @@ from egnn_clean import get_edges_batch
 
 dataset = ProtienStructuresDataset()
 
-print(len(dataset[0]))
-coords,one_hot,e1,f,o = dataset[0]
+# print(len(dataset[0]))
+one_hot,edges = dataset[0]
 
-print(coords.shape)
 print(one_hot.shape)
-print(o.shape)
+print(edges[0].shape)
 
 
+
+# print(get_edges_batch(4,2))
 
 # print(e1[0].shape)
 # print(e2.shape)

@@ -4,23 +4,33 @@ import torch
 from torch.utils.data import Dataset
 from egnn_clean import get_edges_batch
 
+def split_array(input_array, chunk_size):
+  return [input_array[i:i + chunk_size] for i in range(0, len(input_array), chunk_size)]
+
 class ProtienStructuresDataset(Dataset):
-  def __init__(self, path='./processed_big_atoms',max_len=300):
-    self.paths = []
+  def __init__(self, path='./processed_big_atoms',max_len=300,min_len=50,batch_size=16):
+    self.lengths = []
+    length_map = {}
+    self.batches = []
     for pdb in os.listdir(path):
       length=pdb.split('_')[2].split('.')[0]
       if int(length) <= max_len:
-        self.paths.append(path+"/" + pdb)
+        self.lengths.append(int(length))
+        length_map[int(length)] = length_map.get(int(length), []) + [path + "/" + pdb]
+    for key in length_map:
+      self.batches.extend(split_array(length_map[key], batch_size))
 
   def __len__(self):
-    return len(self.paths)
+    return len(self.batches)
 
   def __getitem__(self, idx):
-    file_path=self.paths[idx]
-    with open(file_path, 'r') as file:
-      data = json.load(file)
-    one_hot=torch.tensor(data['one_hot'], dtype=torch.float32)
-    edges=[]
-    for e in data['edges']:
-      edges.append(torch.tensor(e, dtype=torch.int64))
+    batch = self.batches[idx]
+    one_hots = []
+    res_len = int(batch[0].split('/')[2].split('_')[2].split('.')[0])
+    for file_path in batch:  
+      with open(file_path, 'r') as file:
+        data = json.load(file)
+      one_hots.append(torch.tensor(data['one_hot'], dtype=torch.float32))
+    one_hot = torch.cat(one_hots, dim=0)
+    edges,_=get_edges_batch(res_len,len(batch))
     return one_hot, edges

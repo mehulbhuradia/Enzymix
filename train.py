@@ -27,8 +27,8 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--resume', type=str, default=None)
     parser.add_argument('--name', type=str, default="")
-    parser.add_argument('--layers', type=int, default=4)
-    parser.add_argument('--add_layers', type=int, default=100)
+    parser.add_argument('--layers', type=int, default=2)
+    parser.add_argument('--add_layers', type=int, default=2)
 
 
     args = parser.parse_args()
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     # Data
     logger.info('Loading dataset...')
-    dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len)
+    dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len, min_len=config.train.min_len, batch_size=config.train.batch_size)
     train_size = int(0.9 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
@@ -111,7 +111,6 @@ if __name__ == '__main__':
         model.train()
         avg_loss = {}
         avg_loss['overall'] = 0
-        avg_loss['seq'] = 0
         avg_forward_time = 0
         avg_backward_time = 0
         number_of_samples = len(train_loader)
@@ -142,19 +141,15 @@ if __name__ == '__main__':
             time_backward_end = current_milli_time()
 
             avg_loss['overall'] += loss_dict['overall']
-            avg_loss['seq'] += loss_dict['seq']
 
             avg_forward_time += (time_forward_end - time_start)
             avg_backward_time += (time_backward_end - time_forward_end)
 
-            if i % config.train.batch_size == 0 or i == len(train_loader) - 1:
-                # no gradent clipping
-                orig_grad_norm = clip_grad_norm_(model.parameters(), config.train.max_grad_norm)
-                optimizer.step()
-                optimizer.zero_grad()
+            orig_grad_norm = clip_grad_norm_(model.parameters(), config.train.max_grad_norm)
+            optimizer.step()
+            optimizer.zero_grad()
             
-        avg_loss['overall'] /= number_of_samples        
-        avg_loss['seq'] /= number_of_samples
+        avg_loss['overall'] /= number_of_samples
         avg_forward_time /= number_of_samples
         avg_backward_time /= number_of_samples
 
@@ -164,7 +159,6 @@ if __name__ == '__main__':
     def validate(it):
         avg_loss = {}
         avg_loss['overall'] = 0
-        avg_loss['seq'] = 0
         number_of_samples = len(val_loader)
         with torch.no_grad():
             model.eval()
@@ -178,8 +172,6 @@ if __name__ == '__main__':
                 # Accumulate
                 avg_loss['overall'] += loss_dict['overall']
                 
-                avg_loss['seq'] += loss_dict['seq']
-        
         # Trigger scheduler
         if config.train.scheduler.type == 'plateau':
             scheduler.step(avg_loss['overall'])
@@ -188,14 +180,14 @@ if __name__ == '__main__':
 
         avg_loss['overall'] /= number_of_samples
         
-        avg_loss['seq'] /= number_of_samples
+        
 
         return avg_loss
 
     # Main training loop
     try:
         # Set up early stopping
-        early_stopping = {'counter': 0, 'best_loss': float('inf'), 'best_seq': float('inf')}
+        early_stopping = {'counter': 0, 'best_loss': float('inf')}
         max_patience = config.train.early_stop_patience
 
         for it in range(it_first, config.train.max_epochs + 1):
@@ -216,10 +208,8 @@ if __name__ == '__main__':
                 log_losses(avg_val_loss, it, 'val', logger, writer)  
                 
                 # Check for early stopping
-                # if avg_val_loss['overall'] < early_stopping['best_loss']:
-                if  avg_val_loss['seq'] < early_stopping['best_seq']:
-                    # early_stopping['best_loss'] = avg_val_loss['overall']
-                    early_stopping['best_seq'] = avg_val_loss['seq']
+                if avg_val_loss['overall'] < early_stopping['best_loss']:
+                    early_stopping['best_loss'] = avg_val_loss['overall']
                     early_stopping['counter'] = 0
                     if not args.debug:
                         ckpt_path = os.path.join(ckpt_dir, '%d.pt' % it)
