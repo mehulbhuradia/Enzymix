@@ -95,3 +95,10 @@ important:9651778: gcl
 9652891: gcl t long -i will use
 
 v100 is the only gpu that worked for se3
+
+9683011
+9683010
+9683009
+9683008
+9683007
+9683006

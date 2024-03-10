@@ -19,3 +19,4 @@ uniprot_sprot.fasta.fai
 output.fasta
 omegaout/
 processed_seq/
+generated_seqs/

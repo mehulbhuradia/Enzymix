@@ -45,6 +45,7 @@ amino_acids=["ALA",
     "UNK"
 ]
 
+BASE_AMINO_ACIDS = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
 
 
 if __name__ == '__main__':
@@ -111,6 +112,9 @@ if __name__ == '__main__':
     ckpt = torch.load(ckpt_path, map_location=args.device)
     model.load_state_dict(ckpt['model'])
 
+def split_array(input_array, chunk_size):
+  return [input_array[i:i + chunk_size] for i in range(0, len(input_array), chunk_size)]
+
 
 def sample_one(i):
     model.eval()
@@ -119,29 +123,20 @@ def sample_one(i):
     one_hot=one_hot.unsqueeze(0).to(args.device)
     edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
     traj = model.sample(one_hot, edges)
-    return traj,model.trans_seq._sample(one_hot).squeeze(0)
+    batch_size = dataset.batches[i]
+    res_len = int(batch_size[0].split('/')[2].split('_')[2].split('.')[0])
 
+    seq_gen=""
+    for j in range(0, len(traj[0][0])):
+        seq_gen+=BASE_AMINO_ACIDS[traj[0][0][j]]
 
-traj,s_true = sample_one(0)
+    seqs = split_array(seq_gen, res_len)
 
-# print(traj[0][0])
+    for k in range(len(seqs)):
+        sequence_id = f"sequence_{i}_{k}"
+        fasta_content = f">{sequence_id}\n{seqs[k]}"
+        fasta_filename = f"generated_seqs/output_{i}_{k}.fasta"    
+        with open(fasta_filename, "w") as fasta_file:
+            fasta_file.write(fasta_content)
 
-BASE_AMINO_ACIDS = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
-
-seq_gen=""
-for i in range(0, len(traj[0][0])):
-    seq_gen+=BASE_AMINO_ACIDS[traj[0][0][i]]
-    # print(BASE_AMINO_ACIDS[traj[0][0][i]])
-
-print(seq_gen)
-
-sequence_id = "sequence1"
-
-fasta_content = f">{sequence_id}\n{seq_gen}"
-
-fasta_filename = "output.fasta"
-
-with open(fasta_filename, "w") as fasta_file:
-    fasta_file.write(fasta_content)
-
-print(f"Fasta file '{fasta_filename}' created successfully.")
+sample_one(0)

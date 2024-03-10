@@ -7,6 +7,9 @@ dataset = ProtienStructuresDataset()
 # print(len(dataset[0]))
 one_hot,edges = dataset[0]
 
+batch_size = dataset.batches[0]
+res_len = int(batch_size[0].split('/')[2].split('_')[2].split('.')[0])
+print(batch_size,res_len)
 print(one_hot.shape)
 print(edges[0].shape)
 
