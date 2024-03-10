@@ -116,6 +116,7 @@ if __name__ == '__main__':
         number_of_samples = len(train_loader)
 
         for i,x in enumerate(tqdm(train_loader, desc='Training Epoch: '+str(it), dynamic_ncols=True)):
+            torch.cuda.empty_cache()
             time_start = current_milli_time()
             x = recursive_to(x, args.device)
             
@@ -163,6 +164,7 @@ if __name__ == '__main__':
         with torch.no_grad():
             model.eval()
             for x in tqdm(val_loader, desc='Validate', dynamic_ncols=True):
+                torch.cuda.empty_cache()
                 # Prepare data
                 x = recursive_to(x, args.device)
                 # Forward
