@@ -1,6 +1,6 @@
 #!/bin/sh
 #SBATCH --partition=general
-#SBATCH --job-name=Enzymix_A
+#SBATCH --job-name=Seq
 #SBATCH --qos=long         
 #SBATCH --time=168:00:00      
 #SBATCH --ntasks=1         
