@@ -132,11 +132,17 @@ def sample_one(i):
 
     seqs = split_array(seq_gen, res_len)
 
+    fasta_content = ""
     for k in range(len(seqs)):
         sequence_id = f"sequence_{i}_{k}"
-        fasta_content = f">{sequence_id}\n{seqs[k]}"
-        fasta_filename = f"generated_seqs/output_{i}_{k}.fasta"    
-        with open(fasta_filename, "w") as fasta_file:
-            fasta_file.write(fasta_content)
+        fasta_seq = split_array(seqs[k], 60)
+        fasta_content += f">{sequence_id}"
+        for fs in fasta_seq:
+            fasta_content += f"\n{''.join(fs)}"
+        fasta_content += "\n"
+        
+    fasta_filename = f"generated_seqs/output_{i}.fasta"    
+    with open(fasta_filename, "w") as fasta_file:
+        fasta_file.write(fasta_content)
 
 sample_one(0)
