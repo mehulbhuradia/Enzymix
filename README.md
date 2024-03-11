@@ -32,6 +32,8 @@ cd /tudelft.net/staff-umbrella/Enzymix/Enzymix/
 <!-- download log files -->
 scp -r daic:/tudelft.net/staff-umbrella/Enzymix/Enzymix/logs/ ./
 
+scp -r daic:/tudelft.net/staff-umbrella/Mehul/Enzymix/logs/ ./
+
 
 scp -r daic:/tudelft.net/staff-umbrella/Enzymix/Enzymix/logs/train_2024_03_06__16_44_22gcl_long_tateverylayer_layers_2_add_layers_24 ./logs/
 # tensorboard --logdir D:\Thesis\Enzymix\logs\

@@ -58,7 +58,7 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--name', type=str, default="")
     parser.add_argument('--layers', type=int, default=2)
-    parser.add_argument('--add_layers', type=int, default=24)
+    parser.add_argument('--add_layers', type=int, default=32)
     parser.add_argument('--uni', type=str, default=None)
 
     args = parser.parse_args()
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/s/checkpoints/290.pt"
+    args.resume="D:/Thesis/Enzymix/logs/test/checkpoints/32.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -146,3 +146,13 @@ def sample_one(i):
         fasta_file.write(fasta_content)
 
 sample_one(0)
+sample_one(1)
+sample_one(2)
+sample_one(3)
+sample_one(4)
+sample_one(5)
+sample_one(6)
+sample_one(7)
+sample_one(8)
+sample_one(9)
+sample_one(10)
