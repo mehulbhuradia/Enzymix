@@ -67,7 +67,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/test/checkpoints/32.pt"
+    args.resume="D:/Thesis/Enzymix/logs/test/checkpoints/47.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -143,11 +143,13 @@ def sample_one(i):
     return fasta_content
 
 fasta_content = ""
-for i in range(0, 10):
+for i in range(0, len(dataset)):
     fasta_content += sample_one(i)
 
 fasta_filename = f"generated_seqs/output.fasta"    
 with open(fasta_filename, "w") as fasta_file:
     fasta_file.write(fasta_content)
+
+print(f"Generated {fasta_filename}")
 
 
