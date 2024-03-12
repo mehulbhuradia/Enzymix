@@ -19,7 +19,7 @@ for seq in sequences:
     seqs.append(seq[:].seq)
 
 
-print(len(seqs))
+print(len(seqs)) #2660
 
 def score(model, tokenizer, sentence):
     tensor_input = tokenizer.encode(sentence, return_tensors='pt')
@@ -35,7 +35,7 @@ def score(model, tokenizer, sentence):
     return np.exp(loss.item())
 
 ppl = []
-for i in seqs[:3]:
+for i in seqs[:2500]:
     num = score(model=model, tokenizer=tokenizer, sentence = i)
     ppl.append(num)
     print(num)
@@ -44,6 +44,11 @@ mean_ppl = np.mean(ppl)
 
 print("mean:",mean_ppl)
 
+import json
 
-# # Lower Pseudo-Perplexity is better
-print(ppl)
+# Specify the file path where you want to save the JSON data
+json_file_path = 'ppl_gen_2500.json'
+
+# Save the array to a JSON file
+with open(json_file_path, 'w') as json_file:
+    json.dump(ppl, json_file)
