@@ -8,7 +8,7 @@ def split_array(input_array, chunk_size):
   return [input_array[i:i + chunk_size] for i in range(0, len(input_array), chunk_size)]
 
 class ProtienStructuresDataset(Dataset):
-  def __init__(self, path='./processed_big_atoms',max_len=300,min_len=50,batch_size=16):
+  def __init__(self, path='./processed_big_atoms',max_len=300,min_len=50,batch_size=8):
     self.lengths = []
     length_map = {}
     self.batches = []

@@ -18,7 +18,7 @@ from diffab.utils.data import *
 from diffab.utils.train import *
 from dpm import FullDPM
 from af_db import ProtienStructuresDataset
-from makepdb import create_pdb_file
+
 
 amino_acids=["ALA",
     "CYS",
@@ -86,11 +86,11 @@ if __name__ == '__main__':
 
     # Data
     print('Loading dataset...')
-    dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len)
+    dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len, min_len=config.train.min_len, batch_size=config.train.batch_size)
     d_loader = DataLoader(
         dataset, 
         batch_size=1,  
-        shuffle=False,
+        shuffle=True,
         num_workers=args.num_workers
     )
     print('Samples %d' % (len(dataset)))
@@ -122,9 +122,9 @@ def sample_one(i):
     one_hot, edges= dataset.__getitem__(i)
     one_hot=one_hot.unsqueeze(0).to(args.device)
     edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
+    batch = dataset.batches[i]
     traj = model.sample(one_hot, edges)
-    batch_size = dataset.batches[i]
-    res_len = int(batch_size[0].split('/')[2].split('_')[2].split('.')[0])
+    res_len = int(batch[0].split('/')[2].split('_')[2].split('.')[0])
 
     seq_gen=""
     for j in range(0, len(traj[0][0])):
@@ -140,19 +140,14 @@ def sample_one(i):
         for fs in fasta_seq:
             fasta_content += f"\n{''.join(fs)}"
         fasta_content += "\n"
-        
-    fasta_filename = f"generated_seqs/output_{i}.fasta"    
-    with open(fasta_filename, "w") as fasta_file:
-        fasta_file.write(fasta_content)
+    return fasta_content
 
-sample_one(0)
-sample_one(1)
-sample_one(2)
-sample_one(3)
-sample_one(4)
-sample_one(5)
-sample_one(6)
-sample_one(7)
-sample_one(8)
-sample_one(9)
-sample_one(10)
+fasta_content = ""
+for i in range(0, 10):
+    fasta_content += sample_one(i)
+
+fasta_filename = f"generated_seqs/output.fasta"    
+with open(fasta_filename, "w") as fasta_file:
+    fasta_file.write(fasta_content)
+
+
