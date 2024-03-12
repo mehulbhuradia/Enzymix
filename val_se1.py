@@ -43,3 +43,7 @@ for i in seqs[:3]:
 mean_ppl = np.mean(ppl)
 
 print("mean:",mean_ppl)
+
+
+# # Lower Pseudo-Perplexity is better
+print(ppl)

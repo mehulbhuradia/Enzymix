@@ -52,6 +52,13 @@ conda install pyg -c pyg
 conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 conda install packaging
 
+<!-- for esm2 -->
+conda install conda-forge::transformers
+<!-- for omegafold -->
+conda install conda-forge::biopython
+<!-- to read fasta -->
+conda install bioconda::pyfaidx
+
 
 
 
@@ -66,21 +73,7 @@ squeue -u mbhuradia
 
 squeue -u mbhuradia -t RUNNING -h | wc -l
 
-14 x 4 =206078 egcl layers ran out of memory
 
-8 x 8 = 188888 ran out
-
-RuntimeError: DataLoader worker (pid 191071) is killed by signal: Killed.
-slurmstepd: error: Detected 1 oom-kill event(s) in StepId=9209586.0. Some of your processes may have been killed by the cgroup out-$
-srun: error: influ2: task 0: Out Of Memory
-srun: launch/slurm: _step_signal: Terminating StepId=9209586.0
-slurmstepd: error: Detected 1 oom-kill event(s) in StepId=9209586.batch. Some of your processes may have been killed by the cgroup $
-
-
-# print("pout",p_pred[0,0])
-        # print("pin",p_noisy[0,0])
-        #  todo figure out hy its the same?
-didnt work cuz x was being changed
 
 for /L %i in (0, 1, 1000) do python visall.py --n %i
 
@@ -104,3 +97,6 @@ v100 is the only gpu that worked for se3
 9683008
 9683007
 9683006
+
+
+conda activate /tudelft.net/staff-umbrella/Mehul/OmegaFold/omega
