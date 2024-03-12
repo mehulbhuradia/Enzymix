@@ -60,6 +60,9 @@ conda install conda-forge::biopython
 conda install bioconda::pyfaidx
 
 
+<!-- to change tmpdir, very imp for omega fold -->
+export HOME=/tmp/mbhuradia/
+
 
 
 sbatch script.sbatch name layers addlayers

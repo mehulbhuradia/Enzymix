@@ -13,7 +13,7 @@ tokenizer = EsmTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D")
 model = EsmForMaskedLM.from_pretrained("facebook/esm2_t33_650M_UR50D").to(device)
 
 
-sequences = Fasta('generated_seqs/output.fasta')
+sequences = Fasta('generated_seqs/og.fasta')
 seqs=[]
 for seq in sequences:
     seqs.append(seq[:].seq)
@@ -47,7 +47,7 @@ print("mean:",mean_ppl)
 import json
 
 # Specify the file path where you want to save the JSON data
-json_file_path = 'ppl_gen_2500.json'
+json_file_path = 'ppl_og_2500.json'
 
 # Save the array to a JSON file
 with open(json_file_path, 'w') as json_file:
