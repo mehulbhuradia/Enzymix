@@ -17,7 +17,7 @@ class FullDPM(nn.Module):
         out_node_nf=20,
         num_steps=100, 
         n_layers=4, 
-        x_dim =9,
+        x_dim =3,
         additional_layers=0,
         trans_pos_opt={}, 
         trans_seq_opt={},
@@ -32,8 +32,8 @@ class FullDPM(nn.Module):
 
         # self.register_buffer('position_scale', torch.FloatTensor(position_scale).view(1, 1, -1))
         self.register_buffer('_dummy', torch.empty([0, ]))
-        mean = torch.tensor([-0.7497,  0.5599, -0.2493, -0.7673,  0.5536, -0.2367, -0.7379,  0.5644, -0.2577])
-        std = torch.tensor([14.9381, 12.4760, 15.7061, 14.9017, 12.4261, 15.6763, 14.9080, 12.4432, 15.6748])
+        mean = torch.tensor([-0.7497,  0.5599, -0.2493])
+        std = torch.tensor([14.9381, 12.4760, 15.7061])
         self.register_buffer('mean', torch.FloatTensor(mean))
         self.register_buffer('std', torch.FloatTensor(std))
 

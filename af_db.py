@@ -20,6 +20,7 @@ class ProtienStructuresDataset(Dataset):
       data = json.load(file)
     coords=torch.tensor(data['coords'], dtype=torch.float32)
     one_hot=torch.tensor(data['one_hot'], dtype=torch.float32)
+    coords = coords[:, :3]
     edges=[]
     for e in data['edges']:
       edges.append(torch.tensor(e, dtype=torch.int64))
@@ -32,6 +33,7 @@ class ProtienStructuresDataset(Dataset):
           data = json.load(file)
         coords=torch.Tensor(data['coords'])
         one_hot=torch.Tensor(data['one_hot'])
+        coords = coords[:, :3]
         edges=[]
         for e in data['edges']:
           edges.append(torch.tensor(e, dtype=torch.int64))
