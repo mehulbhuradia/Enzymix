@@ -15,7 +15,7 @@ class FullDPM(nn.Module):
         in_node_nf =23, 
         hidden_nf=23,
         out_node_nf=20,
-        num_steps=500, 
+        num_steps=100, 
         n_layers=4, 
         additional_layers=24,
         trans_seq_opt={},
