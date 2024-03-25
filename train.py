@@ -26,7 +26,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--resume', type=str, default=None)
-    parser.add_argument('--name', type=str, default="")
+    parser.add_argument('--name', type=str, default="t100")
     parser.add_argument('--layers', type=int, default=2)
     parser.add_argument('--add_layers', type=int, default=32)
 
