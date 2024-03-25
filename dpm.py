@@ -38,11 +38,11 @@ class FullDPM(nn.Module):
         self.register_buffer('std', torch.FloatTensor(std))
 
     def _normalize_position(self, p):
-        p_norm = (p - self.mean) / self.std
+        p_norm = (p) / 10.0
         return p_norm
 
     def _unnormalize_position(self, p_norm):
-        p = p_norm * self.std + self.mean
+        p = p_norm * 10.0
         return p
 
     def forward(self, p_0, c_0, e, t=None,analyse=False):
