@@ -1,6 +1,6 @@
 from torch import nn
 import torch
-
+from diffab.modules.common.layers import PositionalEncoding
 
 class E_GCL(nn.Module):
     """
@@ -106,6 +106,7 @@ class EGNN(nn.Module):
         self.hidden_nf = hidden_nf
         self.device = device
         self.n_layers = n_layers
+        self.pos_enc = PositionalEncoding(num_funcs=1)
         for i in range(0, n_layers):
             self.add_module("embedding_in_%d" % i, nn.Linear(in_node_nf, self.hidden_nf))
             self.add_module("gcl_%d" % i, E_GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=in_edge_nf,
@@ -114,8 +115,13 @@ class EGNN(nn.Module):
             self.add_module("embedding_out_%d" % i, nn.Linear(self.hidden_nf, out_node_nf))
         self.to(self.device)
 
-    def forward(self, h, t, edges):
+    def forward(self, h, t, edges, batch_size):
         for i in range(0, self.n_layers):
+            chunks = torch.chunk(h, batch_size.item(), dim=1)
+            pos_chunks = []
+            for chunk in chunks:
+                pos_chunks.append(self.pos_enc(chunk))
+            h = torch.cat(pos_chunks, dim=1)
             h = torch.cat((h, t), dim=1)
             h = self._modules["embedding_in_%d" % i](h)
             h,_ = self._modules["gcl_%d" % i](h, edges)

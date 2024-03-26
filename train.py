@@ -121,7 +121,7 @@ if __name__ == '__main__':
             time_start = current_milli_time()
             x = recursive_to(x, args.device)
             
-            loss_dict = model(x[0], x[1])
+            loss_dict = model(x[0], x[1], x[2])
             loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
             loss_dict['overall'] = loss
             time_forward_end = current_milli_time()
@@ -174,7 +174,7 @@ if __name__ == '__main__':
                 # Prepare data
                 x = recursive_to(x, args.device)
                 # Forward
-                loss_dict = model(x[0], x[1])
+                loss_dict = model(x[0], x[1], x[2])
                 loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
                 loss_dict['overall'] = loss
                 # Accumulate

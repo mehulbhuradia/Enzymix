@@ -12,8 +12,8 @@ class FullDPM(nn.Module):
 
     def __init__(
         self, 
-        in_node_nf =23, 
-        hidden_nf=23,
+        in_node_nf =63, 
+        hidden_nf=63,
         out_node_nf=20,
         num_steps=100, 
         n_layers=4, 
@@ -30,7 +30,7 @@ class FullDPM(nn.Module):
         self.register_buffer('_dummy', torch.empty([0, ]))
     
 
-    def forward(self, c_0, e, t=None,analyse=False):
+    def forward(self, c_0, e, batch_size, t=None,analyse=False):
         # L is sequence length, N is 1
         # p_0: (N, L, 3) coordinates
         # c_0: (N, L, 20) one-hot encoding of amino acid sequence
@@ -60,7 +60,7 @@ class FullDPM(nn.Module):
     
         t_embed = torch.stack([beta, torch.sin(beta), torch.cos(beta)], dim=-1)[:, None, :].squeeze(0).expand(L, 3) # (L, 3)
         
-        c_denoised = self.eps_net(h=c_noisy,  t=t_embed, edges=edges) 
+        c_denoised = self.eps_net(h=c_noisy,  t=t_embed, edges=edges, batch_size=batch_size)
         
         # Softmax
         c_denoised = F.softmax(c_denoised, dim=-1)        

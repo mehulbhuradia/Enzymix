@@ -33,4 +33,4 @@ class ProtienStructuresDataset(Dataset):
       one_hots.append(torch.tensor(data['one_hot'], dtype=torch.float32))
     one_hot = torch.cat(one_hots, dim=0)
     edges,_=get_edges_batch(res_len,len(batch))
-    return one_hot, edges
+    return one_hot, edges, len(batch)
