@@ -80,7 +80,7 @@ class E_GCL(nn.Module):
 
 
 class EGNN(nn.Module):
-    def __init__(self, in_node_nf, hidden_nf, out_node_nf, in_edge_nf=0, device='cpu', act_fn=nn.SiLU(), n_layers=4, residual=True, attention=False, normalize=False, tanh=False,additional_layers=24):
+    def __init__(self, in_node_nf, hidden_nf, out_node_nf, in_edge_nf=0, device='cuda:0', act_fn=nn.SiLU(), n_layers=4, residual=True, attention=False, normalize=False, tanh=False,additional_layers=24):
         '''
 
         :param in_node_nf: Number of features for 'h' at the input
@@ -117,11 +117,16 @@ class EGNN(nn.Module):
 
     def forward(self, h, t, edges, batch_size):
         for i in range(0, self.n_layers):
-            chunks = torch.chunk(h, batch_size.item(), dim=1)
+            res_len = h.shape[0]/batch_size.item()
+            indeces=torch.arange(res_len).unsqueeze(-1)
+            indeces = indeces.to(h.device)
+            pos_e = self.pos_enc(indeces)
+            pos_e = pos_e.to(self.device)
             pos_chunks = []
-            for chunk in chunks:
-                pos_chunks.append(self.pos_enc(chunk))
-            h = torch.cat(pos_chunks, dim=1)
+            for _ in range(batch_size):
+                pos_chunks.append(pos_e)
+            pos_h = torch.cat(pos_chunks, dim=0)
+            h = torch.cat((h, pos_h), dim=1)
             h = torch.cat((h, t), dim=1)
             h = self._modules["embedding_in_%d" % i](h)
             h,_ = self._modules["gcl_%d" % i](h, edges)

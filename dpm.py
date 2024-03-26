@@ -12,8 +12,8 @@ class FullDPM(nn.Module):
 
     def __init__(
         self, 
-        in_node_nf =63, 
-        hidden_nf=63,
+        in_node_nf =26, 
+        hidden_nf=26,
         out_node_nf=20,
         num_steps=100, 
         n_layers=4, 
