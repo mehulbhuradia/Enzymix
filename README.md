@@ -119,3 +119,6 @@ conda activate /tudelft.net/staff-umbrella/Mehul/OmegaFold/omega
 9853329      insy dima_dif mbhuradi  R 1-06:05:28      1 gpu21 cross DIMA/dima
 9853504      insy dima_inf mbhuradi  R 1-04:49:18      1 gpu22 og afdb Enzymix/dima
 9854976 insy,gene  Enzymix mbhuradi PD       0:00      1 (Priority) e6
+9855017 e7
+9855018 e8
+9855019 e9
