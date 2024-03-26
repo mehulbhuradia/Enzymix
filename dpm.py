@@ -19,7 +19,7 @@ class FullDPM(nn.Module):
         n_layers=4, 
         additional_layers=24,
         trans_seq_opt={},
-        masking_percentage=10
+        masking_percentage=25
     ):
         super().__init__()
         
