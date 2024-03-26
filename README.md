@@ -112,7 +112,8 @@ conda activate /tudelft.net/staff-umbrella/Mehul/OmegaFold/omega
 9854115      insy  Enzymix mbhuradi  R    2:34:05      1 insy16 e2
 9853329      insy dima_dif mbhuradi  R 1-00:23:27      1 gpu21 cross DIMA/dima
 9853504      insy dima_inf mbhuradi  R   23:07:17      1 gpu22 og afdb Enzymix/dima
-9854336 insy,gene  Enzymix mbhuradi PD       0:00      1 (Priority) 1 or 4 or 5 
-9854334 insy,gene  Enzymix mbhuradi PD       0:00      1 (Priority) 1 or 4 or 5
-9854335 insy,gene  Enzymix mbhuradi PD       0:00      1 (Priority) 1 or 4 or 5
 9854340 insy,gene dima_dif mbhuradi PD       0:00      1 (Priority) L_score og afdb Enzymix/dima (Nan or inf detected)
+
+           9854361 insy,gene  Enzymix mbhuradi PD       0:00      1 (Priority) 4
+           9854364 insy,gene  Enzymix mbhuradi PD       0:00      1 (Priority) 6
+           9854362 insy,gene  Enzymix mbhuradi PD       0:00      1 (Priority) 5
