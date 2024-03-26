@@ -14,4 +14,4 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
-srun python train.py train.yml --name positional --layers 2 --add_layers 32
+srun python train.py train.yml --name mask50 --layers 2 --add_layers 32
