@@ -26,11 +26,11 @@ class ProtienStructuresDataset(Dataset):
   def __getitem__(self, idx):
     batch = self.batches[idx]
     one_hots = []
-    res_len = int(batch[0].split('/')[2].split('_')[2].split('.')[0])
     for file_path in batch:  
       with open(file_path, 'r') as file:
         data = json.load(file)
       one_hots.append(torch.tensor(data['one_hot'], dtype=torch.float32))
+    res_len = one_hots[0].shape[0]
     one_hot = torch.cat(one_hots, dim=0)
     edges,_=get_edges_batch(res_len,len(batch))
     return one_hot, edges
