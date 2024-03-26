@@ -19,11 +19,13 @@ class FullDPM(nn.Module):
         n_layers=4, 
         additional_layers=24,
         trans_seq_opt={},
+        masking_percentage=10
     ):
         super().__init__()
         
         self.eps_net = EGNN(in_node_nf=in_node_nf, hidden_nf=hidden_nf, out_node_nf=out_node_nf,n_layers=n_layers,additional_layers=additional_layers)
         self.num_steps = num_steps
+        self.masking_percentage = masking_percentage
 
         self.trans_seq = AminoacidCategoricalTransition(num_steps, **trans_seq_opt)
 
@@ -45,9 +47,18 @@ class FullDPM(nn.Module):
         if t == None:
             t = torch.randint(0, self.num_steps, (N,), dtype=torch.long, device=self._dummy.device)
 
-        mask_generate = torch.full((N,L), True, dtype=torch.bool, device = c_0.device) 
+        mask_generate = torch.full((N,L), False, dtype=torch.bool, device = c_0.device) 
+        
+        mask_L = L // self.masking_percentage
 
-    
+        mask_idx=torch.randint(0, L - mask_L, (1,)).item()
+
+        # Ensure mask is within sequence length
+        while mask_idx + mask_L > L:
+            mask_idx-=1
+
+        mask_generate[:, mask_idx:mask_idx+mask_L] = True
+        
         # Add noise to sequence
         s_0=self.trans_seq._sample(c_0) # c_0 should be N,L,20
         c_noisy, s_noisy = self.trans_seq.add_noise(s_0, mask_generate, t)
