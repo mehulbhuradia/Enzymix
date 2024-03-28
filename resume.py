@@ -20,54 +20,18 @@ from dpm import FullDPM
 from af_db import ProtienStructuresDataset
 
 
-def plotter(esp_pred, eps, c_0, c_denoised,p_noisy,p_0):
-
+def plotter(c_0, c_denoised,c_noisy):
     c_0 = np.argmax(c_0.detach().to("cpu").numpy(), axis=1).reshape(-1, 1)
     c_denoised = np.argmax(c_denoised.detach().to("cpu").numpy(), axis=1).reshape(-1, 1)
+    c_noisy = np.argmax(c_noisy.detach().to("cpu").numpy(), axis=1).reshape(-1, 1)
 
-    array1 = esp_pred.detach().to("cpu").squeeze(0).t().numpy()
-    array2 = eps.detach().to("cpu").squeeze(0).t().numpy()
-    array3 = p_noisy.detach().to("cpu").squeeze(0).t().numpy()
-    array4 = p_0.detach().to("cpu").squeeze(0).t().numpy()
-    
-    
-    # Create subplots
-    fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
-
-    # Plot each line in a subplot
-    # g_CA_coords
-    axs[0][0].plot(array1[0], color='r', label='pred')
-    axs[0][0].plot(array2[0], color='b', label='eps')
-    axs[0][0].plot(array3[0], color='g', label='p_noisy')
-    # axs[0][0].plot(array4[0], color='y', label='p_0')
-    
-    # Add legend
-    axs[0][0].legend()
-    axs[0][0].set_title('C-a x')
-    # g_CA_coords
-    axs[1][0].plot(array1[1], color='r', label='pred')
-    axs[1][0].plot(array2[1], color='b', label='eps')
-    # axs[1][0].plot(array3[1], color='g', label='p_noisy')
-    # axs[1][0].plot(array4[1], color='y', label='p_0')
-    
-    # Add legend
-    axs[1][0].legend()
-    axs[1][0].set_title('C-a y')
-    # g_CA_coords
-    axs[0][1].plot(array1[2], color='r', label='pred')
-    axs[0][1].plot(array2[2], color='b', label='eps')
-    # axs[0][1].plot(array3[2], color='g', label='p_noisy')
-    # axs[0][1].plot(array4[2], color='y', label='p_0')
-
-    # Add legend
-    axs[0][1].legend()
-    axs[0][1].set_title('C-a z')
-    # sequence
-    axs[1][1].plot(c_0, color='r', label='pred')
-    axs[1][1].plot(c_denoised, color='b', label='true')
-    # Add legend
-    axs[1][1].legend()
-    axs[1][1].set_title('Sequence')
+    # Plot Sequence
+    plt.figure(figsize=(8, 6))
+    plt.plot(c_0, color='r', label='true')
+    # plt.plot(c_denoised, color='b', label='pred')
+    plt.plot(c_noisy, color='g', label='noisy')
+    plt.legend()
+    plt.title('Sequence')
 
     # Show the plot
     plt.show()
@@ -82,8 +46,8 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
 
     parser.add_argument('--name', type=str, default="")
-    parser.add_argument('--layers', type=int, default=100)
-    parser.add_argument('--add_layers', type=int, default=0)
+    parser.add_argument('--layers', type=int, default=2)
+    parser.add_argument('--add_layers', type=int, default=32)
     parser.add_argument('--uni', type=str, default=None)
 
 
@@ -93,7 +57,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/train_2024_02_22__01_28_55_layers_100_add_layers_0/checkpoints/15.pt"
+    args.resume="D:/Thesis/Enzymix/downloads/seq/positional_layers_2_add_layers_32/checkpoints/51.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -140,21 +104,20 @@ if __name__ == '__main__':
     model.load_state_dict(ckpt['model'])
 
 
-    def test_one(uniprotid,t):
+    def test_one(i):
         with torch.no_grad():
             model.eval()
             
-            coords, one_hot, edges, path = dataset.get_item_by_uniprotid(uniprotid)
-            
-            coords=coords.unsqueeze(0).to(args.device)
+            one_hot, edges, batch_size = dataset.__getitem__(i)
+            coords=one_hot.unsqueeze(0).to(args.device)
             one_hot=one_hot.unsqueeze(0).to(args.device)
             edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
 
-            
-            loss_dict, eps_pred, eps_p, c_0, c_denoised,t,p_noisy,p_0 = model(coords, one_hot, edges,analyse=True,t=t)
-            
-            if (torch.isnan(eps_p).any().item()):
-                print("eps_p has nan")
+            batch_size=torch.tensor([batch_size]).to(args.device)
+            batch = dataset.batches[i]
+            loss_dict, c_0, c_denoised,c_noisy, t = model(one_hot, edges,batch_size,analyse=True)
+            res_len = int(one_hot.shape[1]/batch_size.item())
+
 
             if (torch.isnan(c_denoised).any().item()):
                 print("c_denoised has nan")            
@@ -174,26 +137,17 @@ if __name__ == '__main__':
             loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
             loss_dict['overall'] = loss
             
-            # if "A0A1D6H1J3" in path:
-            # if args.uni in path:
-            print(loss_dict,"Incorrect", counte,"Total", length,path,t)
-
-            # if "A0A1D6H1J3" in path:
-            plotter(eps_pred, eps_p, c_0, c_denoised,p_noisy,p_0)
+            print(loss_dict,"Incorrect", counte,"Total", length,t)
+            plotter(c_0, c_denoised,c_noisy)
 
             
             if not torch.isfinite(loss):
                 print('NaN or Inf detected.')
         
-    # if args.uni:
-    #     test_one(args.uni)
-    # else:
-    #     for i in dataset.paths:
-    t = torch.randint(1, 100, (1,), dtype=torch.long)
-    test_one(dataset.paths[0],t)
-    t = torch.randint(450, 550, (1,), dtype=torch.long)
-    test_one(dataset.paths[0],t)
-    t = torch.randint(900, 1000, (1,), dtype=torch.long)
-    test_one(dataset.paths[0],t)
-    
-
+    test_one(0)
+    test_one(0)
+    test_one(0)
+    test_one(0)
+    test_one(0)
+    test_one(0)
+    test_one(0)

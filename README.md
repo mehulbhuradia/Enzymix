@@ -126,3 +126,7 @@ conda activate /tudelft.net/staff-umbrella/Mehul/OmegaFold/omega
 9854986 insy,gene dima_dif mbhuradi PD       0:00      1 (Priority) batch 128 maybe?
 9855020 insy,gene  Enzymix mbhuradi PD       0:00      1 (Priority) e7
 9855023 insy,gene  Enzymix mbhuradi PD       0:00      1 (None) e9
+
+
+
+9857209 esm score for pos

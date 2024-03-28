@@ -121,7 +121,7 @@ class EGNN(nn.Module):
             indeces=torch.arange(res_len).unsqueeze(-1)
             indeces = indeces.to(h.device)
             pos_e = self.pos_enc(indeces)
-            pos_e = pos_e.to(self.device)
+            pos_e = pos_e.to(h.device)
             pos_chunks = []
             for _ in range(batch_size):
                 pos_chunks.append(pos_e)
