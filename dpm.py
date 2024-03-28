@@ -88,7 +88,8 @@ class FullDPM(nn.Module):
     def sample(
         self, 
         c, 
-        e
+        e,
+        batch_size
     ):
         # L is sequence length, N is 1
         # c_0: (N, L, 20) one-hot encoding of amino acid sequence
@@ -126,7 +127,7 @@ class FullDPM(nn.Module):
             
             c_t=c_t.squeeze(0) # L,20        
     
-            c_denoised = self.eps_net(h=c_t,  t=t_embed, edges=edges) 
+            c_denoised = self.eps_net(h=c_t,  t=t_embed, edges=edges, batch_size=batch_size) 
 
             # Softmax
             c_denoised = F.softmax(c_denoised, dim=-1)        

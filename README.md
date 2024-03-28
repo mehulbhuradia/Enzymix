@@ -35,6 +35,8 @@ scp -r daic:/tudelft.net/staff-umbrella/Enzymix/Enzymix/logs/ ./
 scp -r daic:/tudelft.net/staff-umbrella/Mehul/Enzymix/logs/ ./
 
 
+scp -r daic:/tudelft.net/staff-umbrella/DIMA/Enzymix_1/logs
+
 scp -r daic:/tudelft.net/staff-umbrella/Enzymix/Enzymix/logs/train_2024_03_06__16_44_22gcl_long_tateverylayer_layers_2_add_layers_24 ./logs/
 # tensorboard --logdir D:\Thesis\Enzymix\logs\
 
@@ -119,6 +121,8 @@ conda activate /tudelft.net/staff-umbrella/Mehul/OmegaFold/omega
 9853329      insy dima_dif mbhuradi  R 1-06:05:28      1 gpu21 cross DIMA/dima
 9853504      insy dima_inf mbhuradi  R 1-04:49:18      1 gpu22 og afdb Enzymix/dima
 9854976 insy,gene  Enzymix mbhuradi PD       0:00      1 (Priority) e6
-9855017 e7
-9855018 e8
-9855019 e9
+
+9855022 insy,gene  Enzymix mbhuradi PD       0:00      1 (None) e8
+9854986 insy,gene dima_dif mbhuradi PD       0:00      1 (Priority) batch 128 maybe?
+9855020 insy,gene  Enzymix mbhuradi PD       0:00      1 (Priority) e7
+9855023 insy,gene  Enzymix mbhuradi PD       0:00      1 (None) e9

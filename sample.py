@@ -67,7 +67,7 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    args.resume="D:/Thesis/Enzymix/logs/test/checkpoints/47.pt"
+    args.resume="D:/Thesis/Enzymix/downloads/seq/positional_layers_2_add_layers_32/checkpoints/51.pt"
     # Logging
     if args.debug:
         writer = BlackHole()
@@ -119,12 +119,14 @@ def split_array(input_array, chunk_size):
 def sample_one(i):
     model.eval()
     print(f"Sampling from {i}")
-    one_hot, edges= dataset.__getitem__(i)
+    one_hot, edges, batch_size = dataset.__getitem__(i)
     one_hot=one_hot.unsqueeze(0).to(args.device)
     edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
+    batch_size=torch.tensor([batch_size]).to(args.device)
     batch = dataset.batches[i]
-    traj = model.sample(one_hot, edges)
-    res_len = int(batch[0].split('/')[2].split('_')[2].split('.')[0])
+    traj = model.sample(one_hot, edges,batch_size)
+    res_len = int(one_hot.shape[1]/batch_size.item())
+    # res_len = int(batch[0].split('/')[2].split('_')[2].split('.')[0])
 
     seq_gen=""
     for j in range(0, len(traj[0][0])):
@@ -146,7 +148,7 @@ fasta_content = ""
 for i in range(0, len(dataset)):
     fasta_content += sample_one(i)
 
-fasta_filename = f"generated_seqs/output.fasta"    
+fasta_filename = f"generated_seqs/pos.fasta"    
 with open(fasta_filename, "w") as fasta_file:
     fasta_file.write(fasta_content)
 
