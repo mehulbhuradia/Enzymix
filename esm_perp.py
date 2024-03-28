@@ -13,7 +13,7 @@ tokenizer = EsmTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D")
 model = EsmForMaskedLM.from_pretrained("facebook/esm2_t33_650M_UR50D").to(device)
 
 
-sequences = Fasta('generated_seqs/og.fasta')
+sequences = Fasta('generated_seqs/pos.fasta')
 seqs=[]
 for seq in sequences:
     seqs.append(seq[:].seq)
