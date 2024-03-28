@@ -50,8 +50,9 @@ class FullDPM(nn.Module):
     
         # Add noise to sequence
         s_0=self.trans_seq._sample(c_0) # c_0 should be N,L,20
-        c_noisy, s_noisy = self.trans_seq.add_noise(s_0, mask_generate, t)
-
+        _, s_noisy = self.trans_seq.add_noise(s_0, mask_generate, t)
+        c_noisy = clampped_one_hot(s_noisy, num_classes=20).float()
+        
         beta = self.trans_seq.var_sched.betas[t]
         
         c_noisy = c_noisy.squeeze(0) # L,20
@@ -80,7 +81,7 @@ class FullDPM(nn.Module):
         loss_seq = (kldiv * mask_generate).sum() / (mask_generate.sum().float() + 1e-8)
         loss_dict['seq'] = loss_seq
         if analyse:
-            return loss_dict, c_0, c_denoised, t
+            return loss_dict, c_0, c_denoised,c_noisy, t
         return loss_dict
   
     
@@ -108,7 +109,7 @@ class FullDPM(nn.Module):
 
         s_rand = torch.randint_like(s, low=0, high=19)
         s_init = torch.where(mask_generate, s_rand, s)
-    
+        
 
         traj = {self.num_steps: s_init}
         
