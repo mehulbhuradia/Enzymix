@@ -49,8 +49,10 @@ if __name__ == '__main__':
     
     if args.struct_only:
         config.train.loss_weights['seq'] = 0
+        print('Training only structure')
     if args.seq_only:
         config.train.loss_weights['pos'] = 0
+        print('Training only sequence')
     
     
 
