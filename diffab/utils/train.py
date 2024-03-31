@@ -63,13 +63,8 @@ def log_losses(out, it, tag, others={}):
 
     print(logstr)
 
-    for k, v in out.items():
-        if k == 'overall':
-            wandb.log({'%s/loss' % tag: v}, step=it)
-        else:
-            wandb.log({'%s/loss_%s' % (tag, k): v}, step=it)
-    for k, v in others.items():
-        wandb.log({'%s/%s' % (tag, k): v}, step=it)
+    out.update(others)
+    wandb.log({tag+'/loss': out}, step=it)
 
 
 
