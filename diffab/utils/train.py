@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from easydict import EasyDict
-
+import wandb
 from .misc import BlackHole
 
 
@@ -51,7 +51,7 @@ def get_warmup_sched(cfg, optimizer):
     return warmup_sched
 
 
-def log_losses(out, it, tag, logger=BlackHole(), writer=BlackHole(), others={}):
+def log_losses(out, it, tag, logger=BlackHole(), writer=BlackHole(), others={},wandb_only=False):
     logstr = '[%s] Iter %05d' % (tag, it)
     logstr += ' | loss %.4f' % out['overall'].item()
     for k, v in out.items():
@@ -60,14 +60,21 @@ def log_losses(out, it, tag, logger=BlackHole(), writer=BlackHole(), others={}):
     for k, v in others.items():
        logstr += ' | %s %2.4f' % (k, v)
     logger.info(logstr)
+    print(logstr)
 
     for k, v in out.items():
         if k == 'overall':
-            writer.add_scalar('%s/loss' % tag, v, it)
+            if not wandb_only:
+                writer.add_scalar('%s/loss' % tag, v, it)
+            wandb.log({'%s/loss' % tag: v}, step=it)
         else:
-            writer.add_scalar('%s/loss_%s' % (tag, k), v, it)
+            if not wandb_only:
+                writer.add_scalar('%s/loss_%s' % (tag, k), v, it)
+            wandb.log({'%s/loss_%s' % (tag, k): v}, step=it)
     for k, v in others.items():
-        writer.add_scalar('%s/%s' % (tag, k), v, it)
+        if not wandb_only:
+            writer.add_scalar('%s/%s' % (tag, k), v, it)
+        wandb.log({'%s/%s' % (tag, k): v}, step=it)
     writer.flush()
 
 
