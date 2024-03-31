@@ -4,11 +4,11 @@ import torch
 from torch.utils.data import Dataset
 
 class ProtienStructuresDataset(Dataset):
-  def __init__(self, path='./processed_big_atoms',max_len=300):
+  def __init__(self, path='./processed_big_atoms',max_len=300, min_len=50):
     self.paths = []
     for pdb in os.listdir(path):
       length=pdb.split('_')[2].split('.')[0]
-      if int(length) <= max_len:
+      if int(length) <= max_len and int(length) > min_len:
         self.paths.append(path+"/" + pdb)
 
   def __len__(self):

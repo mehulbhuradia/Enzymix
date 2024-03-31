@@ -16,3 +16,6 @@ afjson/
 uniprot_sprot.fasta
 uniprot_sprot.fasta.fai
 OmegaOut/
+downloads/
+processed_seq/
+wandb/

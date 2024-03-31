@@ -1,11 +1,7 @@
 from torch import nn
 import torch
+from diffab.modules.common.layers import PositionalEncoding
 
-
-def init_weights(m):
-    if isinstance(m, nn.Linear):
-        torch.nn.init.xavier_uniform_(m.weight,gain=0.001)
-        m.bias.data.fill_(0.01)
 
 class E_GCL(nn.Module):
     """
@@ -45,15 +41,15 @@ class E_GCL(nn.Module):
         self.node_mlp = nn.Sequential(*node_mlp_layers)
 
         coord_mlp_layers = []
-        coord_mlp_layers.append(nn.Linear(hidden_nf, x_dim*x_dim))
+        coord_mlp_layers.append(nn.Linear(hidden_nf, hidden_nf))
         coord_mlp_layers.append(act_fn)
 
-        layer = nn.Linear(x_dim*x_dim, x_dim*x_dim) #used to have bias=False
-        torch.nn.init.xavier_uniform_(layer.weight, gain=0.001) # important for some reason, code breaks when i remove it
-
         for i in range(additional_layers):
-            coord_mlp_layers.append(nn.Linear(x_dim*x_dim, x_dim*x_dim))
+            coord_mlp_layers.append(nn.Linear(hidden_nf, hidden_nf))
             coord_mlp_layers.append(act_fn)
+        
+        layer = nn.Linear(hidden_nf, x_dim*x_dim) #used to have bias=False
+        torch.nn.init.xavier_uniform_(layer.weight, gain=0.001) # important for some reason, code breaks when i remove it
         coord_mlp_layers.append(layer)
         
         if self.tanh:
@@ -68,11 +64,7 @@ class E_GCL(nn.Module):
             att_mlp_layers.append(nn.Linear(hidden_nf, 1))
             att_mlp_layers.append(nn.Sigmoid())
             self.att_mlp = nn.Sequential(*att_mlp_layers)
-        self.coord_mlp.apply(init_weights)
-        self.edge_mlp.apply(init_weights)
-        self.node_mlp.apply(init_weights)
-        # self.att_mlp.apply(self.init_weights)
-
+        
     def edge_model(self, source, target, radial, edge_attr):
         if edge_attr is None:  # Unused.
             out = torch.cat([source, target, radial], dim=1)
@@ -134,7 +126,7 @@ class E_GCL(nn.Module):
 
 
 class EGNN(nn.Module):
-    def __init__(self, in_node_nf, hidden_nf, out_node_nf,x_dim=9, in_edge_nf=0, device='cpu', act_fn=nn.SiLU(), n_layers=4, residual=True, attention=False, normalize=False, tanh=False,additional_layers=0):
+    def __init__(self, in_node_nf, hidden_nf, out_node_nf,x_dim=9, in_edge_nf=0, device='cuda:0', act_fn=nn.SiLU(), n_layers=4, residual=True, attention=False, normalize=False, tanh=False,additional_layers=0):
         '''
 
         :param in_node_nf: Number of features for 'h' at the input
@@ -160,33 +152,58 @@ class EGNN(nn.Module):
         self.hidden_nf = hidden_nf
         self.device = device
         self.n_layers = n_layers
+        self.pos_enc = PositionalEncoding(num_funcs=1)
         self.embedding_in = []
         self.embedding_out = []
         for i in range(0, n_layers):
-            self.add_module("in_linear_layer_%d" % i, nn.Linear(in_node_nf, self.hidden_nf))
+            self.add_module("embedding_in_%d" % i, nn.Linear(in_node_nf, self.hidden_nf))
             # if i < 2:
             #     additional_layers=24
             # else:
             #     additional_layers=0
-            self.add_module("gcl_%d" % i, E_GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=in_edge_nf,x_dim=x_dim,
+            self.add_module("egcl_%d" % i, E_GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=in_edge_nf,x_dim=x_dim,
                                                 act_fn=act_fn, residual=residual, attention=attention,
                                                 normalize=normalize, tanh=tanh,additional_layers=additional_layers))
-            self.add_module("out_linear_layer_%d" % i, nn.Linear(self.hidden_nf, out_node_nf))
+            self.add_module("embedding_out_%d" % i, nn.Linear(self.hidden_nf, out_node_nf))
         self.to(self.device)
 
     def forward(self, h, x, t, edges, edge_attr):
         for i in range(0, self.n_layers):
+            res_len = h.shape[0]
+            indeces=torch.arange(res_len).unsqueeze(-1)
+            indeces = indeces.to(h.device)
+            pos_h = self.pos_enc(indeces)
+            pos_h = pos_h.to(h.device)
+            h = torch.cat((h, pos_h), dim=1)
             h = torch.cat((h, t), dim=1)
-            h = self._modules["in_linear_layer_%d" % i](h)
-            # x_copy = x.detach().clone()
-            h, x, _ = self._modules["gcl_%d" % i](h, edges, x, edge_attr=edge_attr)
+            h = self._modules["embedding_in_%d" % i](h)
+            
+            h, x, _ = self._modules["egcl_%d" % i](h, edges, x)
             
             if (torch.isnan(x).any().item()):
                 print("NAN in x at layer %d" % i)
-                # print(x_copy)
                 raise KeyboardInterrupt()
-            h = self._modules["out_linear_layer_%d" % i](h)
+            
+            h = self._modules["embedding_out_%d" % i](h)
+            
         return h, x
+
+        for i in range(0, self.n_layers):
+            res_len = h.shape[0]/batch_size.item()
+            indeces=torch.arange(res_len).unsqueeze(-1)
+            indeces = indeces.to(h.device)
+            pos_e = self.pos_enc(indeces)
+            pos_e = pos_e.to(h.device)
+            pos_chunks = []
+            for _ in range(batch_size):
+                pos_chunks.append(pos_e)
+            pos_h = torch.cat(pos_chunks, dim=0)
+            h = torch.cat((h, pos_h), dim=1)
+            h = torch.cat((h, t), dim=1)
+            h = self._modules["embedding_in_%d" % i](h)
+            h,_ = self._modules["gcl_%d" % i](h, edges)
+            h = self._modules["embedding_out_%d" % i](h)
+
 
 
 def unsorted_segment_sum(data, segment_ids, num_segments):

@@ -12,8 +12,8 @@ class FullDPM(nn.Module):
 
     def __init__(
         self, 
-        in_node_nf =23, 
-        hidden_nf=23,
+        in_node_nf =26, 
+        hidden_nf=26,
         out_node_nf=20,
         num_steps=100, 
         n_layers=4, 
@@ -71,7 +71,8 @@ class FullDPM(nn.Module):
     
         # Add noise to sequence
         s_0=self.trans_seq._sample(c_0) # c_0 should be N,L,20
-        c_noisy, s_noisy = self.trans_seq.add_noise(s_0, mask_generate, t)
+        _, s_noisy = self.trans_seq.add_noise(s_0, mask_generate, t)
+        c_noisy = clampped_one_hot(s_noisy, num_classes=20).float()
         
         beta = self.trans_pos.var_sched.betas[t]
 
