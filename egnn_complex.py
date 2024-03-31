@@ -66,7 +66,7 @@ class E_GCL(nn.Module):
             self.att_mlp = nn.Sequential(*att_mlp_layers)
         
     def edge_model(self, source, target, radial, edge_attr):
-        if edge_attr is None:  # Unused.
+        if edge_attr is None:
             out = torch.cat([source, target, radial], dim=1)
         else:
             out = torch.cat([source, target, radial, edge_attr], dim=1)
