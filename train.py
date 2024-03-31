@@ -2,8 +2,6 @@ import os
 import shutil
 import argparse
 import torch
-import torch.utils.tensorboard
-# tensorboard --logdir D:\Thesis\Enzymix\logs\   
 from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
@@ -16,7 +14,7 @@ from diffab.utils.misc import *
 from diffab.utils.data import *
 from diffab.utils.train import *
 from dpm import FullDPM
-from af_db import ProtienStructuresDataset
+from af_db_batched import ProtienStructuresDataset
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -27,11 +25,14 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--resume', type=str, default=None)
-    parser.add_argument('--name', type=str, default="caonly")
+    parser.add_argument('--name', type=str, default="Final")
     parser.add_argument('--layers', type=int, default=4)
     parser.add_argument('--add_layers', type=int, default=0)
     parser.add_argument('--node_features', type=int, default=512)
     parser.add_argument('--wandb', action='store_true', default=False)
+    parser.add_argument('--struct_only', action='store_true', default=False)
+    parser.add_argument('--seq_only', action='store_true', default=False)
+    parser.add_argument('--only_ca', action='store_true', default=False)
 
     args = parser.parse_args()
 
@@ -39,22 +40,27 @@ if __name__ == '__main__':
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
 
-    # Logging
-    if args.debug:
-        logger = get_logger('train', None)
-        writer = BlackHole()
+    if args.struct_only and args.seq_only:
+        print('Both struct_only and seq_only are set. Running full model.')
+        args.struct_only = False
+        args.seq_only = False
+    
+    if args.struct_only:
+        config.train.loss_weights['seq'] = 0
+    if args.seq_only:
+        config.train.loss_weights['pos'] = 0
+    
+    
+
+    
+    if args.resume:
+        log_dir = os.path.dirname(os.path.dirname(args.resume))
     else:
-        if args.resume:
-            log_dir = os.path.dirname(os.path.dirname(args.resume))
-        else:
-            log_dir = get_new_log_dir(args.logdir, prefix=config_name, tag=args.tag) + args.name +'_layers_'+str(args.layers)+'_add_layers_'+str(args.add_layers) + '_node_features_'+str(args.node_features)
-        ckpt_dir = os.path.join(log_dir, 'checkpoints')
-        if not os.path.exists(ckpt_dir): os.makedirs(ckpt_dir)
-        logger = get_logger('train', log_dir)
-        writer = torch.utils.tensorboard.SummaryWriter(log_dir)
-        tensorboard_trace_handler = torch.profiler.tensorboard_trace_handler(log_dir)
-        if not os.path.exists(os.path.join(log_dir, os.path.basename(args.config))):
-            shutil.copyfile(args.config, os.path.join(log_dir, os.path.basename(args.config)))
+        log_dir = get_new_log_dir(args.logdir, prefix=config_name, tag=args.tag) + args.name +'_layers_'+str(args.layers)+'_add_layers_'+str(args.add_layers) + '_node_features_'+str(args.node_features)
+    ckpt_dir = os.path.join(log_dir, 'checkpoints')
+    if not os.path.exists(ckpt_dir): os.makedirs(ckpt_dir)
+    if not os.path.exists(os.path.join(log_dir, os.path.basename(args.config))):
+        shutil.copyfile(args.config, os.path.join(log_dir, os.path.basename(args.config)))
     
     # start a new wandb run to track this script
     wandb_config = {"args": args,
@@ -70,18 +76,22 @@ if __name__ == '__main__':
                 name=log_dir.split('/')[-1], # / for linux, \\ for windows
                 config=wandb_config,
                 mode="online" if args.wandb else "disabled",
-                # dir="/tmp/mbhuradia/wandb",
             )
     
     print(args)
     print(config)
-    
-    
 
+    # Check if the model uses all atoms or only CA atoms
+    if args.only_ca:
+        x_dim = 3
+        print('Using only CA atoms')
+    else:
+        x_dim = 9
+        print('Using all 3 atoms')
 
     # Data
     print('Loading dataset...')
-    dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len, min_len=config.train.min_len)
+    dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len, min_len=config.train.min_len,batch_size=config.train.batch_size,only_ca=args.only_ca)
     train_size = int(0.9 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
@@ -92,7 +102,8 @@ if __name__ == '__main__':
         num_workers=args.num_workers
     )
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False, num_workers=args.num_workers)
-    print('Train %d | Val %d' % (len(train_dataset), len(val_dataset)))
+    print("Dataset size: ", dataset.size())
+    print('Train Batches %d | Val Batches %d' % (len(train_dataset), len(val_dataset)))
 
     # Check if CUDA (GPU support) is available
     if torch.cuda.is_available():
@@ -104,7 +115,7 @@ if __name__ == '__main__':
 
     # Model
     print('Building model...')
-    model = FullDPM(n_layers=args.layers,additional_layers=args.add_layers,hidden_nf=args.node_features).to(args.device)
+    model = FullDPM(n_layers=args.layers,additional_layers=args.add_layers,hidden_nf=args.node_features,x_dim=x_dim).to(args.device)
     # model.double()
     print('Number of parameters: %d' % count_parameters(model))
     print('Number of EGCL layers: %d' % args.layers)
@@ -146,13 +157,13 @@ if __name__ == '__main__':
         for i,x in enumerate(tqdm(train_loader, desc='Training Epoch: '+str(it), dynamic_ncols=True)):
             time_start = current_milli_time()
             x = recursive_to(x, args.device)
-            loss_dict = model(x[0], x[1], x[2])
+            loss_dict = model(x[0], x[1], x[2], x[3])
             loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
             loss_dict['overall'] = loss
             time_forward_end = current_milli_time()
 
             if not torch.isfinite(loss):
-                logger.error('NaN or Inf detected.')
+                print('NaN or Inf detected.')
                 torch.save({
                     'config': config,
                     'model': model.state_dict(),
@@ -175,14 +186,11 @@ if __name__ == '__main__':
             avg_forward_time += (time_forward_end - time_start)
             avg_backward_time += (time_backward_end - time_forward_end)
 
-            if i % config.train.batch_size == 0 or i == len(train_loader) - 1:
-                # no gradent clipping
-                orig_grad_norm = clip_grad_norm_(model.parameters(), config.train.max_grad_norm)
-                optimizer.step()
-                optimizer.zero_grad()
+            orig_grad_norm = clip_grad_norm_(model.parameters(), config.train.max_grad_norm)
+            optimizer.step()
+            optimizer.zero_grad()
             
         avg_loss['overall'] /= number_of_samples
-        # avg_loss['rot'] /= number_of_samples
         avg_loss['pos'] /= number_of_samples
         avg_loss['seq'] /= number_of_samples
         avg_forward_time /= number_of_samples
@@ -194,7 +202,6 @@ if __name__ == '__main__':
     def validate(it):
         avg_loss = {}
         avg_loss['overall'] = 0
-        # avg_loss['rot'] = 0
         avg_loss['pos'] = 0
         avg_loss['seq'] = 0
         number_of_samples = len(val_loader)
@@ -204,7 +211,7 @@ if __name__ == '__main__':
                 # Prepare data
                 x = recursive_to(x, args.device)
                 # Forward
-                loss_dict = model(x[0], x[1], x[2])
+                loss_dict = model(x[0], x[1], x[2], x[3])
                 loss = sum_weighted_losses(loss_dict, config.train.loss_weights)
                 loss_dict['overall'] = loss
                 # Accumulate
@@ -220,7 +227,6 @@ if __name__ == '__main__':
             scheduler.step()
 
         avg_loss['overall'] /= number_of_samples
-        # avg_loss['rot'] /= number_of_samples
         avg_loss['pos'] /= number_of_samples
         avg_loss['seq'] /= number_of_samples
 
@@ -237,7 +243,7 @@ if __name__ == '__main__':
             loss_dict, time_forward, time_backward = train(it)
 
             # Logging
-            log_losses(loss_dict, it, 'train', logger, writer, others={
+            log_losses(loss_dict, it, 'train', others={
                 # 'grad': orig_grad_norm,
                 'lr': optimizer.param_groups[0]['lr'],
                 'avg_time_forward': (time_forward) / 1000,
@@ -247,7 +253,7 @@ if __name__ == '__main__':
             if it % config.train.val_freq == 0:
                 avg_val_loss = validate(it)
                 # Logging
-                log_losses(avg_val_loss, it, 'val', logger, writer)  
+                log_losses(avg_val_loss, it, 'val')  
                 
                 # Check for early stopping
                 # if avg_val_loss['overall'] < early_stopping['best_loss']:

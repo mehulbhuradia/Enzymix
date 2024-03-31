@@ -32,8 +32,13 @@ class FullDPM(nn.Module):
 
         # self.register_buffer('position_scale', torch.FloatTensor(position_scale).view(1, 1, -1))
         self.register_buffer('_dummy', torch.empty([0, ]))
-        mean = torch.tensor([-0.7497,  0.5599, -0.2493])
-        std = torch.tensor([14.9381, 12.4760, 15.7061])
+        if x_dim==3:
+            mean = torch.tensor([-0.7497,  0.5599, -0.2493])
+            std = torch.tensor([14.9381, 12.4760, 15.7061])
+        else:
+            mean = torch.tensor([-0.7497,  0.5599, -0.2493, -0.7673,  0.5536, -0.2367, -0.7379,  0.5644, -0.2577])
+            std = torch.tensor([14.9381, 12.4760, 15.7061, 14.9017, 12.4261, 15.6763, 14.9080, 12.4432, 15.6748])
+        
         self.register_buffer('mean', torch.FloatTensor(mean))
         self.register_buffer('std', torch.FloatTensor(std))
 
@@ -45,7 +50,7 @@ class FullDPM(nn.Module):
         p = p_norm * self.std + self.mean
         return p
 
-    def forward(self, p_0, c_0, e, t=None,analyse=False):
+    def forward(self, p_0, c_0, e, batch_size, t=None,analyse=False):
         # L is sequence length, N is 1
         # p_0: (N, L, 3) coordinates
         # c_0: (N, L, 20) one-hot encoding of amino acid sequence
@@ -85,7 +90,7 @@ class FullDPM(nn.Module):
     
         t_embed = torch.stack([beta, torch.sin(beta), torch.cos(beta)], dim=-1)[:, None, :].squeeze(0).expand(L, 3) # (L, 3)
             
-        c_denoised , eps_pred = self.eps_net(h=c_noisy, x=p_noisy.clone().detach(), t=t_embed, edges=edges, edge_attr=None) #(L x 23), (L x 3)
+        c_denoised , eps_pred = self.eps_net(h=c_noisy, x=p_noisy.clone().detach(), t=t_embed, edges=edges, batch_size=batch_size) #(L x 23), (L x 3)
         
         # Softmax
         c_denoised = F.softmax(c_denoised, dim=-1)        
@@ -125,6 +130,7 @@ class FullDPM(nn.Module):
         p, 
         c, 
         e,
+        batch_size,
         sample_structure=True, sample_sequence=True,
         pbar=False,
     ):
@@ -179,7 +185,7 @@ class FullDPM(nn.Module):
             p_t=p_t.squeeze(0) # L,3
             c_t=c_t.squeeze(0) # L,20        
     
-            c_denoised , eps_p = self.eps_net(h=c_t, x=p_t.clone().detach(), t=t_embed, edges=edges, edge_attr=None) #(L x 23), (L x 3)
+            c_denoised , eps_p = self.eps_net(h=c_t, x=p_t.clone().detach(), t=t_embed, edges=edges,batch_size=batch_size) #(L x 23), (L x 3)
 
             # Softmax
             c_denoised = F.softmax(c_denoised, dim=-1)        

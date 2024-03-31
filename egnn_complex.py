@@ -167,13 +167,17 @@ class EGNN(nn.Module):
             self.add_module("embedding_out_%d" % i, nn.Linear(self.hidden_nf, out_node_nf))
         self.to(self.device)
 
-    def forward(self, h, x, t, edges, edge_attr):
+    def forward(self, h, x, t, edges, batch_size):
         for i in range(0, self.n_layers):
-            res_len = h.shape[0]
+            res_len = h.shape[0]/batch_size.item()
             indeces=torch.arange(res_len).unsqueeze(-1)
             indeces = indeces.to(h.device)
-            pos_h = self.pos_enc(indeces)
-            pos_h = pos_h.to(h.device)
+            pos_e = self.pos_enc(indeces)
+            pos_e = pos_e.to(h.device)
+            pos_chunks = []
+            for _ in range(batch_size):
+                pos_chunks.append(pos_e)
+            pos_h = torch.cat(pos_chunks, dim=0)
             h = torch.cat((h, pos_h), dim=1)
             h = torch.cat((h, t), dim=1)
             h = self._modules["embedding_in_%d" % i](h)

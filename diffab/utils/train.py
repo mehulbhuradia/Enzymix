@@ -51,61 +51,26 @@ def get_warmup_sched(cfg, optimizer):
     return warmup_sched
 
 
-def log_losses(out, it, tag, logger=BlackHole(), writer=BlackHole(), others={},wandb_only=False):
+def log_losses(out, it, tag, others={}):
     logstr = '[%s] Iter %05d' % (tag, it)
     logstr += ' | loss %.4f' % out['overall'].item()
+    
     for k, v in out.items():
         if k == 'overall': continue
         logstr += ' | loss(%s) %.4f' % (k, v.item())
     for k, v in others.items():
        logstr += ' | %s %2.4f' % (k, v)
-    logger.info(logstr)
+
     print(logstr)
 
     for k, v in out.items():
         if k == 'overall':
-            if not wandb_only:
-                writer.add_scalar('%s/loss' % tag, v, it)
             wandb.log({'%s/loss' % tag: v}, step=it)
         else:
-            if not wandb_only:
-                writer.add_scalar('%s/loss_%s' % (tag, k), v, it)
             wandb.log({'%s/loss_%s' % (tag, k): v}, step=it)
     for k, v in others.items():
-        if not wandb_only:
-            writer.add_scalar('%s/%s' % (tag, k), v, it)
         wandb.log({'%s/%s' % (tag, k): v}, step=it)
-    writer.flush()
 
-
-class ValidationLossTape(object):
-
-    def __init__(self):
-        super().__init__()
-        self.accumulate = {}
-        self.others = {}
-        self.total = 0
-
-    def update(self, out, n, others={}):
-        self.total += n
-        for k, v in out.items():
-            if k not in self.accumulate:
-                self.accumulate[k] = v.clone().detach()
-            else:
-                self.accumulate[k] += v.clone().detach()
-
-        for k, v in others.items():
-            if k not in self.others:
-                self.others[k] = v.clone().detach()
-            else:
-                self.others[k] += v.clone().detach()
-        
-
-    def log(self, it, logger=BlackHole(), writer=BlackHole(), tag='val'):
-        avg = EasyDict({k:v / self.total for k, v in self.accumulate.items()})
-        avg_others = EasyDict({k:v / self.total for k, v in self.others.items()})
-        log_losses(avg, it, tag, logger, writer, others=avg_others)
-        return avg['overall']
 
 
 def recursive_to(obj, device):
