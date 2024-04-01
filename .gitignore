@@ -19,3 +19,5 @@ OmegaOut/
 downloads/
 processed_seq/
 wandb/
+pdb/
+processed_pdb/
