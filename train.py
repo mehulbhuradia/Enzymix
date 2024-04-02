@@ -31,9 +31,6 @@ if __name__ == '__main__':
     parser.add_argument('--node_features', type=int, default=512)
     parser.add_argument('--wandb', action='store_true', default=False)
     
-    # Choosing what the model learns
-    parser.add_argument('--struct_only', action='store_true', default=False)
-    parser.add_argument('--seq_only', action='store_true', default=False)
     parser.add_argument('--only_ca', action='store_true', default=False)
 
     args = parser.parse_args()
@@ -41,20 +38,6 @@ if __name__ == '__main__':
     # Load configs
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
-
-    if args.struct_only and args.seq_only:
-        print('Both struct_only and seq_only are set. Running full model.')
-        args.struct_only = False
-        args.seq_only = False
-    
-    if args.struct_only:
-        config.train.loss_weights['seq'] = 0
-        print('Training only structure')
-    if args.seq_only:
-        config.train.loss_weights['pos'] = 0
-        print('Training only sequence')
-    
-    
 
     
     if args.resume:
@@ -75,8 +58,6 @@ if __name__ == '__main__':
                     "add_layers": args.add_layers,
                     "node_features": args.node_features,
                     "only_ca": args.only_ca,
-                    "struct_only": args.struct_only,
-                    "seq_only": args.seq_only,
                     }
     wandb.init(
                 project="Enzymix_Both",
