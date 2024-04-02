@@ -79,7 +79,7 @@ if __name__ == '__main__':
                     "seq_only": args.seq_only,
                     }
     wandb.init(
-                project="Enzymix_Struct",
+                project="Enzymix_Both",
                 name=log_dir.split('/')[-1], # / for linux, \\ for windows
                 config=wandb_config,
                 mode="online" if args.wandb else "disabled",
