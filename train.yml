@@ -8,7 +8,7 @@ train:
   seed: 2022
   max_len: 100
   min_len: 50
-  path: ./swiss_p
+  path: /tudelft.net/staff-umbrella/DIMA/swiss_p
   early_stop_patience: 100
   max_grad_norm: 100.0
   optimizer:
