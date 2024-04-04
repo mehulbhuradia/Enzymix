@@ -126,7 +126,7 @@ class E_GCL(nn.Module):
 
 
 class EGNN(nn.Module):
-    def __init__(self, in_node_nf, hidden_nf, out_node_nf,x_dim=9, in_edge_nf=0, device='cuda:0', act_fn=nn.SiLU(), n_layers=4, residual=True, attention=False, normalize=False, tanh=False,additional_layers=0):
+    def __init__(self, in_node_nf, hidden_nf, out_node_nf,x_dim=9, in_edge_nf=0, device='cuda:0', act_fn=nn.SiLU(), n_layers=4, residual=True, attention=False, normalize=False, tanh=False,additional_layers=0,coords_agg='mean'):
         '''
 
         :param in_node_nf: Number of features for 'h' at the input
@@ -163,7 +163,7 @@ class EGNN(nn.Module):
             #     additional_layers=0
             self.add_module("egcl_%d" % i, E_GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=in_edge_nf,x_dim=x_dim,
                                                 act_fn=act_fn, residual=residual, attention=attention,
-                                                normalize=normalize, tanh=tanh,additional_layers=additional_layers))
+                                                normalize=normalize, tanh=tanh,additional_layers=additional_layers,coords_agg=coords_agg))
             self.add_module("embedding_out_%d" % i, nn.Linear(self.hidden_nf, out_node_nf))
         self.to(self.device)
 

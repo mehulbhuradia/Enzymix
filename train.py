@@ -18,26 +18,54 @@ from af_db_batched import ProtienStructuresDataset
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('config', type=str)
+    parser.add_argument('--config', type=str,default='./train.yml')
     parser.add_argument('--logdir', type=str, default='./logs')
     parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--resume', type=str, default=None)
-    parser.add_argument('--name', type=str, default="Final")
-    parser.add_argument('--layers', type=int, default=4)
-    parser.add_argument('--add_layers', type=int, default=0)
-    parser.add_argument('--node_features', type=int, default=512)
+    parser.add_argument('--name', type=str, default="Both")
     parser.add_argument('--wandb', action='store_true', default=False)
     
+    # Task options
     parser.add_argument('--only_ca', action='store_true', default=False)
+    parser.add_argument('--num_steps', type=int, default=100)
 
+    # EGNN options
+    parser.add_argument('--eg_attention', action='store_true', default=False)
+    parser.add_argument('--eg_aggregate', type=str, default='mean') # mean or sum
+    parser.add_argument('--eg_disable_residual', action='store_false', default=True)
+    parser.add_argument('--eg_normalize', action='store_true', default=False)
+    parser.add_argument('--eg_tanh', action='store_true', default=False)
+    parser.add_argument('--layers', type=int, default=4)
+    parser.add_argument('--add_layers', type=int, default=0)
+    parser.add_argument('--node_features', type=int, default=1024)
+
+    # Configurations
+    parser.add_argument('--batch_size', type=int, default=2)
+    parser.add_argument('--max_len', type=int, default=100)
+    parser.add_argument('--min_len', type=int, default=50)
+    parser.add_argument('--lr', type=float, default=1.e-5)
+
+    # Loss weights
+    parser.add_argument('--w_pos', type=float, default=1.0)
+    parser.add_argument('--w_seq', type=float, default=1.0)
+    
+    
     args = parser.parse_args()
 
     # Load configs
     config, config_name = load_config(args.config)
     seed_all(config.train.seed)
+    
+    # Update config based on args
+    config.train.batch_size = args.batch_size
+    config.train.max_len = args.max_len
+    config.train.min_len = args.min_len
+    config.train.optimizer.lr = args.lr
+    config.train.loss_weights.pos = args.w_pos
+    config.train.loss_weights.seq = args.w_seq
 
     
     if args.resume:
@@ -60,7 +88,7 @@ if __name__ == '__main__':
                     "only_ca": args.only_ca,
                     }
     wandb.init(
-                project="Enzymix_Both",
+                project="Enzymix_Full",
                 name=log_dir.split('/')[-1], # / for linux, \\ for windows
                 config=wandb_config,
                 mode="online" if args.wandb else "disabled",
@@ -103,7 +131,18 @@ if __name__ == '__main__':
 
     # Model
     print('Building model...')
-    model = FullDPM(n_layers=args.layers,additional_layers=args.add_layers,hidden_nf=args.node_features,x_dim=x_dim).to(args.device)
+    model = FullDPM(n_layers=args.layers,
+                additional_layers=args.add_layers,
+                hidden_nf=args.node_features,
+                x_dim=x_dim,
+                attention=args.eg_attention,
+                normalize=args.eg_normalize,
+                residual=args.eg_disable_residual,
+                coords_agg=args.eg_aggregate,
+                tanh=args.eg_tanh,
+                num_steps=args.num_steps
+                    ).to(args.device)
+    
     # model.double()
     print('Number of parameters: %d' % count_parameters(model))
     print('Number of EGCL layers: %d' % args.layers)
