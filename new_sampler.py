@@ -20,32 +20,9 @@ from dpm import FullDPM
 from af_db_batched import ProtienStructuresDataset, split_array
 from makepdb import create_pdb_file
 
-amino_acids=["ALA",
-    "CYS",
-    "ASP",
-    "GLU",
-    "PHE",
-    "GLY",
-    "HIS",
-    "ILE",
-    "LYS",
-    "LEU",
-    "MET",
-    "ASN",
-    "PYL",
-    "PRO",
-    "GLN",
-    "ARG",
-    "SER",
-    "THR",
-    "SEC",
-    "VAL",
-    "TRP",
-    "TYR",
-    "UNK"
-]
+amino_acids=["ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE", "LYS", "LEU", "MET", "ASN", "PYL", "PRO", "GLN", "ARG", "SER", "THR", "SEC", "VAL", "TRP", "TYR", "UNK"]
 
-
+BASE_AMINO_ACIDS = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
 
 
 
@@ -68,7 +45,7 @@ parser.add_argument('--add_layers', type=int, default=0)
 parser.add_argument('--node_features', type=int, default=1024)
 
 # Configurations
-parser.add_argument('--batch_size', type=int, default=2)
+parser.add_argument('--batch_size', type=int, default=16)
 parser.add_argument('--max_len', type=int, default=100)
 parser.add_argument('--min_len', type=int, default=50)
 
@@ -138,19 +115,24 @@ def sample_one(idx):
     edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
     batch_size = torch.tensor([batch_size]).to(args.device)
     traj = model.sample(coords, one_hot, edges,batch_size, pbar=True, sample_structure=True, sample_sequence=True)
-    return traj,batch_size,res_len
+    return traj,res_len
 
 
-def make_pdb(traj, res_len, global_counter,num=0):
+def make_pdb(traj, res_len, global_counter,folder_path="generated/pdb",num=0):
     sequences=traj[num][1].squeeze(0)
     sequence_list = split_array(sequences, res_len)
     positions=traj[num][0].detach().to("cpu").squeeze(0).numpy()
     positions_list = split_array(positions, res_len)
 
+    # Make PDB file and fasta sequences
+    fastas = []
     for i in range(len(sequence_list)):
         sequence_name = []
+        sequence_fasta = ""
         for j in sequence_list[i].tolist():
             sequence_name.append(amino_acids[j])
+            sequence_fasta+=BASE_AMINO_ACIDS[j]
+        fastas.append(sequence_fasta)
         residues=[]
         for j in range(len(sequence_name)):
             temp = {}
@@ -159,15 +141,42 @@ def make_pdb(traj, res_len, global_counter,num=0):
             temp['CB'] = positions_list[i][j][3:6].tolist()
             temp['CN'] = positions_list[i][j][6:].tolist()
             residues.append(temp)
-        # check if the directory exists
-        if not os.path.exists("generated"):
-            os.makedirs("generated")
-        create_pdb_file(residues, "generated/"+str(global_counter)+"_"+str(num)+".pdb")
+        create_pdb_file(residues, folder_path+str(global_counter)+"_"+str(num)+".pdb")
         global_counter+=1
-    return global_counter
 
-global_counter = 0
-for i in range(10):
-    traj,batch_size,res_len = sample_one(i)
-    global_counter = make_pdb(traj, res_len, global_counter)
+    # Convert fasta sequences to fasta content
+    fasta_content = ""
+    for k in range(len(fastas)):
+        sequence_id = f"sequence_{global_counter}"
+        fasta_seq = split_array(fastas[k], 60)
+        fasta_content += f">{sequence_id}"
+        for fs in fasta_seq:
+            fasta_content += f"\n{''.join(fs)}"
+        fasta_content += "\n"
 
+    return fasta_content, global_counter
+
+
+def generate(count,folder_path="generated/"):
+    if count > dataset.size():
+        count = dataset.size()
+    global_counter = 0
+    fasta_content = ""
+    # Create folder for generated PDB files
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    if not os.path.exists(folder_path+"/pdb"):
+        os.makedirs(folder_path+"/pdb")
+    if not os.path.exists(folder_path+"/fasta"):
+        os.makedirs(folder_path+"/fasta")
+    for i in range(count):
+        traj,res_len = sample_one(i)
+        fasta_content_i,global_counter = make_pdb(traj, res_len, global_counter,folder_path=folder_path+"/pdb/")
+        fasta_content += fasta_content_i
+        if global_counter > count:
+            break
+    fasta_filename = folder_path + "fasta/" + "generated.fasta"
+    with open(fasta_filename, "w") as fasta_file:
+        fasta_file.write(fasta_content)
+
+generate(10,"generated/100/")
