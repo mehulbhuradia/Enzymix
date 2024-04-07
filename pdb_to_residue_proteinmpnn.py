@@ -12,7 +12,7 @@ from tqdm.auto import tqdm
 
 
 
-PROTEINMPNN_SCRIPT = os.path.expanduser("D:/Thesis/ProteinMPNN/protein_mpnn_run.py")
+PROTEINMPNN_SCRIPT = os.path.expanduser("/tudelft.net/staff-umbrella/DIMA/ProteinMPNN/protein_mpnn_run.py")
 assert os.path.isfile(PROTEINMPNN_SCRIPT), f"Expected {PROTEINMPNN_SCRIPT} to exist"
 
 
