@@ -69,3 +69,8 @@ slurmstepd: error: Detected 1 oom-kill event(s) in StepId=9209586.batch. Some of
         # print("pin",p_noisy[0,0])
         #  todo figure out hy its the same?
 didnt work cuz x was being changed
+
+
+
+Increasing lr to 4 and 8 is always bad regardless of change in batch size
+using a large number(16) of layers causes nans

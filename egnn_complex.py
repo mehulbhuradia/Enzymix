@@ -2,13 +2,17 @@ from torch import nn
 import torch
 from diffab.modules.common.layers import PositionalEncoding
 
+def init_weights(m):
+    if isinstance(m, nn.Linear):
+        torch.nn.init.xavier_uniform_(m.weight,gain=0.001)
+        m.bias.data.fill_(0.01)
 
 class E_GCL(nn.Module):
     """
     E(n) Equivariant Convolutional Layer
     re
     """
-    def __init__(self, input_nf, output_nf, hidden_nf, edges_in_d=0,x_dim=9, act_fn=nn.SiLU(), residual=True, attention=False, normalize=False, coords_agg='mean', tanh=False, additional_layers=0):
+    def __init__(self, input_nf, output_nf, hidden_nf, edges_in_d=0,x_dim=9, act_fn=nn.SiLU(), residual=True, attention=False, normalize=False, coords_agg='mean', tanh=False, additional_layers=0,initw=True):
         super(E_GCL, self).__init__()
         input_edge = input_nf * 2
         self.residual = residual
@@ -64,6 +68,12 @@ class E_GCL(nn.Module):
             att_mlp_layers.append(nn.Linear(hidden_nf, 1))
             att_mlp_layers.append(nn.Sigmoid())
             self.att_mlp = nn.Sequential(*att_mlp_layers)
+        if initw:
+            self.coord_mlp.apply(init_weights)
+            self.edge_mlp.apply(init_weights)
+            self.node_mlp.apply(init_weights)
+            if self.attention:
+                self.att_mlp.apply(init_weights)
         
     def edge_model(self, source, target, radial, edge_attr):
         if edge_attr is None:
