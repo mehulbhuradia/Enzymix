@@ -14,4 +14,4 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
-srun python train.py --name inf_8_0_1024_smallbatch --layers 8 --add_layers 0 --node_features 1024 --wandb --batch_size 1
+srun python train.py --name inf_8_0_1024 --layers 8 --add_layers 0 --node_features 1024 --wandb
