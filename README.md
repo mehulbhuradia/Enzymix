@@ -72,5 +72,6 @@ didnt work cuz x was being changed
 
 
 
-Increasing lr to 4 and 8 is always bad regardless of change in batch size
+Increasing lr to 2, 4 and 8 is always bad regardless of change in batch size
 using a large number(16) of layers causes nans
+Init weight made the loss explode for 8 layers, should i try weight decay?

@@ -46,6 +46,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_len', type=int, default=100)
     parser.add_argument('--min_len', type=int, default=50)
     parser.add_argument('--lr', type=float, default=1.e-5)
+    parser.add_argument('--decay', type=float, default=0)
 
     # Loss weights
     parser.add_argument('--w_pos', type=float, default=1.0)
@@ -63,6 +64,7 @@ if __name__ == '__main__':
     config.train.max_len = args.max_len
     config.train.min_len = args.min_len
     config.train.optimizer.lr = args.lr
+    config.train.optimizer.weight_decay = args.decay
     config.train.loss_weights.pos = args.w_pos
     config.train.loss_weights.seq = args.w_seq
 
