@@ -12,7 +12,7 @@ class E_GCL(nn.Module):
     E(n) Equivariant Convolutional Layer
     re
     """
-    def __init__(self, input_nf, output_nf, hidden_nf, edges_in_d=0,x_dim=9, act_fn=nn.SiLU(), residual=True, attention=False, normalize=False, coords_agg='mean', tanh=False, additional_layers=0,initw=True):
+    def __init__(self, input_nf, output_nf, hidden_nf, edges_in_d=0,x_dim=9, act_fn=nn.SiLU(), residual=True, attention=False, normalize=False, coords_agg='mean', tanh=False, additional_layers=0,initw=False):
         super(E_GCL, self).__init__()
         input_edge = input_nf * 2
         self.residual = residual
@@ -136,7 +136,7 @@ class E_GCL(nn.Module):
 
 
 class EGNN(nn.Module):
-    def __init__(self, in_node_nf, hidden_nf, out_node_nf,x_dim=9, in_edge_nf=0, device='cuda:0', act_fn=nn.SiLU(), n_layers=4, residual=True, attention=False, normalize=False, tanh=False,additional_layers=0,coords_agg='mean'):
+    def __init__(self, in_node_nf, hidden_nf, out_node_nf,x_dim=9, in_edge_nf=0, device='cuda:0', act_fn=nn.SiLU(), n_layers=4, residual=True, attention=False, normalize=False, tanh=False,additional_layers=0,coords_agg='mean',initw=False):
         '''
 
         :param in_node_nf: Number of features for 'h' at the input
@@ -173,7 +173,7 @@ class EGNN(nn.Module):
             #     additional_layers=0
             self.add_module("egcl_%d" % i, E_GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=in_edge_nf,x_dim=x_dim,
                                                 act_fn=act_fn, residual=residual, attention=attention,
-                                                normalize=normalize, tanh=tanh,additional_layers=additional_layers,coords_agg=coords_agg))
+                                                normalize=normalize, tanh=tanh,additional_layers=additional_layers,coords_agg=coords_agg,initw=initw))
             self.add_module("embedding_out_%d" % i, nn.Linear(self.hidden_nf, out_node_nf))
         self.to(self.device)
 
