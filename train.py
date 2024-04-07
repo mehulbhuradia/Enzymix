@@ -34,7 +34,6 @@ if __name__ == '__main__':
 
     # EGNN options
     parser.add_argument('--eg_attention', action='store_true', default=False)
-    parser.add_argument('--eg_aggregate', type=str, default='mean') # mean or sum
     parser.add_argument('--eg_disable_residual', action='store_false', default=True)
     parser.add_argument('--eg_normalize', action='store_true', default=False)
     parser.add_argument('--eg_tanh', action='store_true', default=False)
@@ -138,7 +137,7 @@ if __name__ == '__main__':
                 attention=args.eg_attention,
                 normalize=args.eg_normalize,
                 residual=args.eg_disable_residual,
-                coords_agg=args.eg_aggregate,
+                coords_agg='mean', # sum causes NaNs
                 tanh=args.eg_tanh,
                 num_steps=args.num_steps
                     ).to(args.device)
