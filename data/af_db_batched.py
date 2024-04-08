@@ -15,7 +15,7 @@ class ProtienStructuresDataset(Dataset):
     self.batches = []
     for pdb in os.listdir(path):
       length=pdb.split('_')[2].split('.')[0]
-      if int(length) <= max_len:
+      if int(length) <= max_len and int(length) >= min_len:
         self.lengths.append(int(length))
         length_map[int(length)] = length_map.get(int(length), []) + [path + "/" + pdb]
     for key in length_map:
