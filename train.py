@@ -34,6 +34,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--max_len', type=int, default=100)
     parser.add_argument('--min_len', type=int, default=50)
+    parser.add_argument('--path', type=str, default='/tudelft.net/staff-umbrella/DIMA/swiss_p')
     
     
     args = parser.parse_args()
@@ -46,6 +47,7 @@ if __name__ == '__main__':
     config.train.batch_size = args.batch_size
     config.train.max_len = args.max_len
     config.train.min_len = args.min_len
+    config.train.path = args.path
 
     
     if args.resume:
