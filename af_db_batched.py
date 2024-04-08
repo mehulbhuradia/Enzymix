@@ -2,7 +2,7 @@ import os
 import json
 import torch
 from torch.utils.data import Dataset
-from egnn_clean import get_edges_batch
+from egnn_complex import get_edges_batch
 
 def split_array(input_array, chunk_size):
   return [input_array[i:i + chunk_size] for i in range(0, len(input_array), chunk_size)]

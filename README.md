@@ -75,3 +75,11 @@ didnt work cuz x was being changed
 Increasing lr to 2, 4 and 8 is always bad regardless of change in batch size
 using a large number(16) of layers causes nans
 Init weight made the loss explode for 8 layers, should i try weight decay?
+Initw was just bad,
+normalize improved on seq slightly but very very slightly made pos worse, i will go with normalize true
+Tanh was just bad for seq so no tanh
+Attention was good, so attention true
+Additional layers 0
+layers 8 
+nodefeatures 1024
+no residual was good

@@ -4,8 +4,8 @@
 #SBATCH --qos=long         
 #SBATCH --time=168:00:00      
 #SBATCH --ntasks=1         
-#SBATCH --cpus-per-task=2   
-#SBATCH --mem-per-cpu=100G
+#SBATCH --cpus-per-task=8   
+#SBATCH --mem-per-cpu=64G
 #SBATCH --mail-type=END     
 #SBATCH --gres=gpu:a40
 
@@ -14,4 +14,4 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
-srun python train.py --name baseline --layers 4 --add_layers 0 --node_features 1024 --wandb
+srun python train.py --wandb --tag newbaseline

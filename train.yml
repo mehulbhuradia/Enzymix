@@ -6,6 +6,7 @@ train:
   max_epochs: 100000
   val_freq: 5
   seed: 2022
+  batch_size: 2
   max_len: 100
   min_len: 50
   path: /tudelft.net/staff-umbrella/DIMA/swiss_p

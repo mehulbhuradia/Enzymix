@@ -20,37 +20,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str,default='./train.yml')
     parser.add_argument('--logdir', type=str, default='./logs')
-    parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--num_workers', type=int, default=8)
-    parser.add_argument('--tag', type=str, default='')
+    parser.add_argument('--tag', type=str, default='Both')
     parser.add_argument('--resume', type=str, default=None)
-    parser.add_argument('--name', type=str, default="Both")
     parser.add_argument('--wandb', action='store_true', default=False)
     
     # Task options
     parser.add_argument('--only_ca', action='store_true', default=False)
     parser.add_argument('--num_steps', type=int, default=100)
 
-    # EGNN options
-    parser.add_argument('--eg_attention', action='store_true', default=False)
-    parser.add_argument('--eg_disable_residual', action='store_false', default=True)
-    parser.add_argument('--eg_normalize', action='store_true', default=False)
-    parser.add_argument('--eg_tanh', action='store_true', default=False)
-    parser.add_argument('--layers', type=int, default=4)
-    parser.add_argument('--add_layers', type=int, default=0)
-    parser.add_argument('--node_features', type=int, default=1024)
-
     # Configurations
     parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--max_len', type=int, default=100)
     parser.add_argument('--min_len', type=int, default=50)
-    parser.add_argument('--lr', type=float, default=1.e-5)
-    parser.add_argument('--decay', type=float, default=0)
-
-    # Loss weights
-    parser.add_argument('--w_pos', type=float, default=1.0)
-    parser.add_argument('--w_seq', type=float, default=1.0)
     
     
     args = parser.parse_args()
@@ -63,16 +46,12 @@ if __name__ == '__main__':
     config.train.batch_size = args.batch_size
     config.train.max_len = args.max_len
     config.train.min_len = args.min_len
-    config.train.optimizer.lr = args.lr
-    config.train.optimizer.weight_decay = args.decay
-    config.train.loss_weights.pos = args.w_pos
-    config.train.loss_weights.seq = args.w_seq
 
     
     if args.resume:
         log_dir = os.path.dirname(os.path.dirname(args.resume))
     else:
-        log_dir = get_new_log_dir(args.logdir, prefix=config_name, tag=args.tag) + args.name +'_layers_'+str(args.layers)+'_add_layers_'+str(args.add_layers) + '_node_features_'+str(args.node_features)
+        log_dir = get_new_log_dir(args.logdir, prefix=config_name, tag=args.tag)
     ckpt_dir = os.path.join(log_dir, 'checkpoints')
     if not os.path.exists(ckpt_dir): os.makedirs(ckpt_dir)
     if not os.path.exists(os.path.join(log_dir, os.path.basename(args.config))):
@@ -83,9 +62,6 @@ if __name__ == '__main__':
                     "config": config,
                     "config_name": config_name,
                     "log_dir": log_dir,
-                    "layers": args.layers,
-                    "add_layers": args.add_layers,
-                    "node_features": args.node_features,
                     "only_ca": args.only_ca,
                     }
     wandb.init(
@@ -123,33 +99,27 @@ if __name__ == '__main__':
     print('Train Batches %d | Val Batches %d' % (len(train_dataset), len(val_dataset)))
 
     # Check if CUDA (GPU support) is available
-    if torch.cuda.is_available():
-        # Get the number of available GPUs
-        num_gpus = torch.cuda.device_count()
-        print(f"GPU is available with {num_gpus} {'GPU' if num_gpus == 1 else 'GPUs'}")
-    else:
+    if not torch.cuda.is_available():
         print("No GPU available, using CPU.")
+        args.device = 'cpu'
 
     # Model
     print('Building model...')
-    model = FullDPM(n_layers=args.layers,
-                additional_layers=args.add_layers,
-                hidden_nf=args.node_features,
+    model = FullDPM(n_layers=8,
+                additional_layers=0,
+                hidden_nf=1024,
                 x_dim=x_dim,
-                attention=args.eg_attention,
-                normalize=args.eg_normalize,
-                residual=args.eg_disable_residual,
+                attention=True,
+                normalize=True,
+                residual=False,
                 coords_agg='mean', # sum causes NaNs
-                tanh=args.eg_tanh,
+                tanh=False,
                 num_steps=args.num_steps
                     ).to(args.device)
     
     # model.double()
     print('Number of parameters: %d' % count_parameters(model))
-    print('Number of EGCL layers: %d' % args.layers)
-    print('Number of additional layers: %d' % args.add_layers)
-    print('Number of node features: %d' % args.node_features)
-    print('Name of  the run: %s' % args.name)
+    print('Name of  the run: %s' % args.tag)
     # Optimizer & scheduler
     optimizer = get_optimizer(config.train.optimizer, model)
     scheduler = get_scheduler(config.train.scheduler, optimizer)
@@ -224,6 +194,13 @@ if __name__ == '__main__':
         avg_forward_time /= number_of_samples
         avg_backward_time /= number_of_samples
 
+        if avg_loss['seq'] > 0.7:
+            if it == 1 and args.wandb:
+                wandb.alert(title="High Seq Loss on start", text="Bad start for sequence, run will probably fail.")
+            elif it > 10:
+                print("High Seq Loss after 10 iters, stopping training")
+                raise KeyboardInterrupt("High Seq Loss after 10 iters, stopping training")
+
         return avg_loss, avg_forward_time, avg_backward_time
 
     # Validate
@@ -290,16 +267,15 @@ if __name__ == '__main__':
                     early_stopping['best_pos'] = avg_val_loss['pos']
                     early_stopping['best_seq'] = avg_val_loss['seq']
                     early_stopping['counter'] = 0
-                    if not args.debug:
-                        ckpt_path = os.path.join(ckpt_dir, '%d.pt' % it)
-                        torch.save({
-                            'config': config,
-                            'model': model.state_dict(),
-                            'optimizer': optimizer.state_dict(),
-                            'scheduler': scheduler.state_dict(),
-                            'iteration': it,
-                            'avg_val_loss': avg_val_loss['overall'],
-                        }, ckpt_path)
+                    ckpt_path = os.path.join(ckpt_dir, '%d.pt' % it)
+                    torch.save({
+                        'config': config,
+                        'model': model.state_dict(),
+                        'optimizer': optimizer.state_dict(),
+                        'scheduler': scheduler.state_dict(),
+                        'iteration': it,
+                        'avg_val_loss': avg_val_loss['overall'],
+                    }, ckpt_path)
                 else:
                     early_stopping['counter'] += 1
                     if early_stopping['counter'] >= max_patience:
