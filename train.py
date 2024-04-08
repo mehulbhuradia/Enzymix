@@ -40,7 +40,6 @@ if __name__ == '__main__':
     parser.add_argument('--layers', type=int, default=4)
     parser.add_argument('--add_layers', type=int, default=0)
     parser.add_argument('--node_features', type=int, default=1024)
-    parser.add_argument('--initw', action='store_true', default=False)
 
     # Configurations
     parser.add_argument('--batch_size', type=int, default=2)
@@ -142,8 +141,7 @@ if __name__ == '__main__':
                 residual=args.eg_disable_residual,
                 coords_agg='mean', # sum causes NaNs
                 tanh=args.eg_tanh,
-                num_steps=args.num_steps,
-                initw=args.initw
+                num_steps=args.num_steps
                     ).to(args.device)
     
     # model.double()

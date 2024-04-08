@@ -25,8 +25,7 @@ class FullDPM(nn.Module):
         normalize=False,
         coords_agg='mean',
         tanh=False,
-        residual=True,    
-        initw=False
+        residual=True
     ):
         super().__init__()
 
@@ -40,8 +39,7 @@ class FullDPM(nn.Module):
                                 normalize=normalize,
                                 coords_agg=coords_agg,
                                 tanh=tanh,
-                                residual=residual,
-                                initw=initw
+                                residual=residual
                                 )
         
         self.num_steps = num_steps

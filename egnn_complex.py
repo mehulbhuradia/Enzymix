@@ -2,17 +2,12 @@ from torch import nn
 import torch
 from diffab.modules.common.layers import PositionalEncoding
 
-def init_weights(m):
-    if isinstance(m, nn.Linear):
-        torch.nn.init.xavier_uniform_(m.weight,gain=0.001)
-        m.bias.data.fill_(0.01)
-
 class E_GCL(nn.Module):
     """
     E(n) Equivariant Convolutional Layer
     re
     """
-    def __init__(self, input_nf, output_nf, hidden_nf, edges_in_d=0,x_dim=9, act_fn=nn.SiLU(), residual=True, attention=False, normalize=False, coords_agg='mean', tanh=False, additional_layers=0,initw=False):
+    def __init__(self, input_nf, output_nf, hidden_nf, edges_in_d=0,x_dim=9, act_fn=nn.SiLU(), residual=True, attention=False, normalize=False, coords_agg='mean', tanh=False, additional_layers=0):
         super(E_GCL, self).__init__()
         input_edge = input_nf * 2
         self.residual = residual
@@ -68,12 +63,7 @@ class E_GCL(nn.Module):
             att_mlp_layers.append(nn.Linear(hidden_nf, 1))
             att_mlp_layers.append(nn.Sigmoid())
             self.att_mlp = nn.Sequential(*att_mlp_layers)
-        if initw:
-            self.coord_mlp.apply(init_weights)
-            self.edge_mlp.apply(init_weights)
-            self.node_mlp.apply(init_weights)
-            if self.attention:
-                self.att_mlp.apply(init_weights)
+
         
     def edge_model(self, source, target, radial, edge_attr):
         if edge_attr is None:
@@ -136,7 +126,7 @@ class E_GCL(nn.Module):
 
 
 class EGNN(nn.Module):
-    def __init__(self, in_node_nf, hidden_nf, out_node_nf,x_dim=9, in_edge_nf=0, device='cuda:0', act_fn=nn.SiLU(), n_layers=4, residual=True, attention=False, normalize=False, tanh=False,additional_layers=0,coords_agg='mean',initw=False):
+    def __init__(self, in_node_nf, hidden_nf, out_node_nf,x_dim=9, in_edge_nf=0, device='cuda:0', act_fn=nn.SiLU(), n_layers=4, residual=True, attention=False, normalize=False, tanh=False,additional_layers=0,coords_agg='mean'):
         '''
 
         :param in_node_nf: Number of features for 'h' at the input
@@ -173,7 +163,7 @@ class EGNN(nn.Module):
             #     additional_layers=0
             self.add_module("egcl_%d" % i, E_GCL(self.hidden_nf, self.hidden_nf, self.hidden_nf, edges_in_d=in_edge_nf,x_dim=x_dim,
                                                 act_fn=act_fn, residual=residual, attention=attention,
-                                                normalize=normalize, tanh=tanh,additional_layers=additional_layers,coords_agg=coords_agg,initw=initw))
+                                                normalize=normalize, tanh=tanh,additional_layers=additional_layers,coords_agg=coords_agg))
             self.add_module("embedding_out_%d" % i, nn.Linear(self.hidden_nf, out_node_nf))
         self.to(self.device)
 
