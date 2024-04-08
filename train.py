@@ -67,7 +67,7 @@ if __name__ == '__main__':
                     "only_ca": args.only_ca,
                     }
     wandb.init(
-                project="Enzymix_Full",
+                project="DZYN",
                 name=log_dir.split('/')[-1], # / for linux, \\ for windows
                 config=wandb_config,
                 mode="online" if args.wandb else "disabled",
