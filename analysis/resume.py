@@ -16,7 +16,7 @@ import csv
 from diffab.utils.misc import *
 from diffab.utils.data import *
 from diffab.utils.train import *
-from dpm import FullDPM
+from model.dpm import FullDPM
 from af_db import ProtienStructuresDataset
 
 

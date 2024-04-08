@@ -16,8 +16,8 @@ import csv
 from diffab.utils.misc import *
 from diffab.utils.data import *
 from diffab.utils.train import *
-from dpm import FullDPM
-from af_db_batched import ProtienStructuresDataset, split_array
+from model.dpm import FullDPM
+from data.af_db_batched import ProtienStructuresDataset, split_array
 from visualisation.makepdb import create_pdb_file
 
 amino_acids=["ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE", "LYS", "LEU", "MET", "ASN", "PYL", "PRO", "GLN", "ARG", "SER", "THR", "SEC", "VAL", "TRP", "TYR", "UNK"]

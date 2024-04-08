@@ -5,7 +5,7 @@ import functools
 from tqdm.auto import tqdm
 from diffab.modules.diffusion.transition import PositionTransition, AminoacidCategoricalTransition
 from diffab.modules.common.layers import clampped_one_hot
-import egnn_complex as eg
+import model.egnn_complex as eg
 
 
 class FullDPM(nn.Module):

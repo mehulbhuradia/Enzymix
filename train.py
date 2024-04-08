@@ -13,8 +13,8 @@ torch.backends.cudnn.allow_tf32 = True
 from diffab.utils.misc import *
 from diffab.utils.data import *
 from diffab.utils.train import *
-from dpm import FullDPM
-from af_db_batched import ProtienStructuresDataset
+from model.dpm import FullDPM
+from data.af_db_batched import ProtienStructuresDataset
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
