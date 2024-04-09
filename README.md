@@ -39,6 +39,7 @@ conda install -c conda-forge tensorboard
 conda install pyg -c pyg
 conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 conda install packaging
+pip install graphein --user
 
 
 
