@@ -12,9 +12,9 @@ from torch_geometric.utils import from_networkx
 import argparse
 
 parser = argparse.ArgumentParser(description='Preprocess swissprot data')
-parser.add_argument('--data_dir', type=str, default='D:/af50',
+parser.add_argument('--data_dir', type=str, default='./af_50',
                     help='directory containing pdb files')
-parser.add_argument('--save_dir', type=str, default='./af50/',
+parser.add_argument('--save_dir', type=str, default='./af_50_processed/',
                     help='directory to save tensors')
 parser.add_argument('--start', type=int, default=0,
                     help='start index')
@@ -61,7 +61,7 @@ files = os.listdir(directory_path)
 for file in files[args.start:args.start+args.chunk]:
   f_path = os.path.join(directory_path, file)
   if os.path.isfile(f_path) and file.endswith('.pdb'):  
-    protid = file.split('-')[1]
+    protid = file.split('.')[0]
     save_dict = {}
     save_dict['UNIPROT_ID'] = protid
     path=f_path
