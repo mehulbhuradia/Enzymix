@@ -13,7 +13,14 @@ class ProtienStructuresDataset(Dataset):
     self.lengths = []
     length_map = {}
     self.batches = []
+    self.test_set = []
+    count = 0
+    # Exclusing the first 100 pdb files as the test set
     for pdb in os.listdir(path):
+      count += 1
+      if count < 100:
+        self.test_set.append(path + "/" + pdb)
+        continue
       length=pdb.split('_')[2].split('.')[0]
       if int(length) <= max_len and int(length) >= min_len:
         self.lengths.append(int(length))
@@ -44,3 +51,6 @@ class ProtienStructuresDataset(Dataset):
   
   def size(self):
     return len(self.lengths)
+  
+  def get_test_set(self):
+    return self.test_set

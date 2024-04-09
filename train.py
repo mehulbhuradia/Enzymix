@@ -50,7 +50,6 @@ if __name__ == '__main__':
     config.train.min_len = args.min_len
     config.train.path = args.path
 
-    
     if args.resume:
         log_dir = os.path.dirname(os.path.dirname(args.resume))
     else:
@@ -59,6 +58,16 @@ if __name__ == '__main__':
     if not os.path.exists(ckpt_dir): os.makedirs(ckpt_dir)
     if not os.path.exists(os.path.join(log_dir, os.path.basename(args.config))):
         shutil.copyfile(args.config, os.path.join(log_dir, os.path.basename(args.config)))
+
+    # Check if the model uses all atoms or only CA atoms
+    if args.only_ca:
+        x_dim = 3
+        print('Using only CA atoms')
+    else:
+        x_dim = 9
+        print('Using all 3 atoms')
+
+    dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len, min_len=config.train.min_len,batch_size=config.train.batch_size,only_ca=args.only_ca)
     
     # start a new wandb run to track this script
     wandb_config = {"args": args,
@@ -66,6 +75,7 @@ if __name__ == '__main__':
                     "config_name": config_name,
                     "log_dir": log_dir,
                     "only_ca": args.only_ca,
+                    "test_set": dataset.get_test_set(),
                     }
     wandb.init(
                 project="DZYN",
@@ -76,18 +86,7 @@ if __name__ == '__main__':
     
     print(args)
     print(config)
-
-    # Check if the model uses all atoms or only CA atoms
-    if args.only_ca:
-        x_dim = 3
-        print('Using only CA atoms')
-    else:
-        x_dim = 9
-        print('Using all 3 atoms')
-
-    # Data
-    print('Loading dataset...')
-    dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len, min_len=config.train.min_len,batch_size=config.train.batch_size,only_ca=args.only_ca)
+    print("Loading dataset...")
     train_size = int(0.9 * len(dataset))
     test_size = len(dataset) - train_size
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
