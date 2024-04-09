@@ -28,5 +28,5 @@ for i in range(0, chunks):
         file.write('\n')
         file.write('conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis\n')
         file.write('\n')
-        file.write('srun python data/download_from_af.py --start '+str(i*chunk_size)+' --chunk '+str(chunk_size)+'\n')
+        file.write('srun python preprocess_swissprot.py --start '+str(i*chunk_size)+' --chunk '+str(chunk_size)+'\n')
     run_sbatch('prep_'+str(i)+'.sbatch')
