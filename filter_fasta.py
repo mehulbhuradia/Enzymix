@@ -1,7 +1,7 @@
 from Bio import SeqIO
 
 # Replace 'input.fasta' with the path to your input FASTA file
-input_file = "/tudelft.net/staff-umbrella/DIMA/Enzymix/uniprot_trembl.fasta"
+input_file = "/tudelft.net/staff-umbrella/DIMA/uniprot_trembl.fasta"
 # Replace 'output.fasta' with the desired output file path
 output_file = "smallaf50.fasta"
 
