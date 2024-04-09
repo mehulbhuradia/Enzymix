@@ -16,8 +16,8 @@ for i in range(0, chunks):
         file.write('#!/bin/sh\n')
         file.write('#SBATCH --partition=general,insy\n')
         file.write('#SBATCH --job-name=Downloader\n')
-        file.write('#SBATCH --qos=medium\n')
-        file.write('#SBATCH --time=36:00:00\n')
+        file.write('#SBATCH --qos=short\n') #short works for 500 structuresas it only takes like 10ish mins
+        file.write('#SBATCH --time=4:00:00\n')
         file.write('#SBATCH --ntasks=1\n')
         file.write('#SBATCH --cpus-per-task=2\n')
         file.write('#SBATCH --mem-per-cpu=16G\n')
