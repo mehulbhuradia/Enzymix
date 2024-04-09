@@ -2,12 +2,25 @@ import graphein.protein as gp
 from graphein.protein.features.nodes.amino_acid import amino_acid_one_hot
 import os
 
-from egnn_clean import get_edges_batch
+from model.egnn_complex import get_edges_batch
 
 import json
 import torch
 
 from torch_geometric.utils import from_networkx
+# args
+import argparse
+
+parser = argparse.ArgumentParser(description='Preprocess swissprot data')
+parser.add_argument('--data_dir', type=str, default='D:/af50',
+                    help='directory containing pdb files')
+parser.add_argument('--save_dir', type=str, default='./af50/',
+                    help='directory to save tensors')
+parser.add_argument('--start', type=int, default=0,
+                    help='start index')
+parser.add_argument('--chunk', type=int, default=1000,
+                    help='number of files to process')
+args = parser.parse_args()
 
 
 config_n = gp.ProteinGraphConfig(**{"granularity": "N"})
@@ -42,10 +55,10 @@ def pdb_to_tensors_big_atoms(path):
 
 saved_ids=[]
 
-directory_path = 'D:/swissprot_pdb_v4'
+directory_path = args.data_dir
 
 files = os.listdir(directory_path)
-for file in files[22000:25000]:
+for file in files[args.start:args.start+args.chunk]:
   f_path = os.path.join(directory_path, file)
   if os.path.isfile(f_path) and file.endswith('.pdb'):  
     protid = file.split('-')[1]
@@ -54,10 +67,10 @@ for file in files[22000:25000]:
     path=f_path
     g_CA_coords, g_CA_one_hot,edges = pdb_to_tensors_big_atoms(path)
     save_dict['num_nodes'] = g_CA_coords.shape[0]
-    if save_dict['num_nodes'] <= 150 and save_dict['num_nodes'] >= 40:
+    if save_dict['num_nodes'] <= 200 and save_dict['num_nodes'] >= 40:
       saved_ids.append(protid)
       save_dict['coords'] = g_CA_coords.tolist()
       save_dict['one_hot'] = g_CA_one_hot.tolist()
       save_dict['edges'] = [ten.tolist() for ten in edges]
-      with open('./swiss_p/'+protid+'_tensors_'+str(save_dict['num_nodes'])+'.json', 'w') as file:
+      with open(args.save_dir+protid+'_tensors_'+str(save_dict['num_nodes'])+'.json', 'w') as file:
         json.dump(save_dict, file)
