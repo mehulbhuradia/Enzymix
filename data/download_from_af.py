@@ -12,9 +12,6 @@ parser.add_argument('--output', type=str, default='./af_50', help='Output direct
 args = parser.parse_args()
 
 
-if not os.path.exists(args.output):
-    os.makedirs(args.output)
-
 
 def download_alphafold_structure(uniprot_id, save_dir):
     url = f"https://alphafold.ebi.ac.uk/files/AF-{uniprot_id}-F1-model_v4.pdb"
