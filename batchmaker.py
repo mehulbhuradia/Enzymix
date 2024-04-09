@@ -1,7 +1,7 @@
 # make a .sbatch file with the following content:
 
 total = 320000
-chunk_size = 10000
+chunk_size = 500
 chunks = total // chunk_size
 for i in range(0, chunks):
     with open('downloader_'+str(i)+'.sbatch', 'w') as file:
