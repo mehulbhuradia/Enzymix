@@ -1,5 +1,4 @@
 import json
-from graphein.protein.utils import download_alphafold_structure
 import argparse
 import os
 import requests
