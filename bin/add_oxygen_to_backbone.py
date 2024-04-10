@@ -22,7 +22,84 @@ from biotite.structure.io.pdb import PDBFile
 
 from tqdm.auto import tqdm
 
-from foldingdiff import nerf
+import os
+from typing import *
+
+import numpy as np
+import torch
+
+N_CA_LENGTH = 1.46  # Check, approxiamtely right
+CA_C_LENGTH = 1.54  # Check, approximately right
+C_N_LENGTH = 1.34  # Check, approximately right
+
+# Taken from initial coords from 1CRN, which is a THR
+N_INIT = np.array([17.047, 14.099, 3.625])
+CA_INIT = np.array([16.967, 12.784, 4.338])
+C_INIT = np.array([15.685, 12.755, 5.133])
+
+
+def place_dihedral(
+    a: np.ndarray,
+    b: np.ndarray,
+    c: np.ndarray,
+    bond_angle: float,
+    bond_length: float,
+    torsion_angle: float,
+    use_torch: bool = False,
+) -> Union[np.ndarray, torch.Tensor]:
+    """
+    Place the point d such that the bond angle, length, and torsion angle are satisfied
+    with the series a, b, c, d.
+    """
+    assert a.shape == b.shape == c.shape
+    assert a.shape[-1] == b.shape[-1] == c.shape[-1] == 3
+
+    if not use_torch:
+        unit_vec = lambda x: x / np.linalg.norm(x, axis=-1)
+        cross = lambda x, y: np.cross(x, y, axis=-1)
+    else:
+        ensure_tensor = (
+            lambda x: torch.tensor(x, requires_grad=False).to(a.device)
+            if not isinstance(x, torch.Tensor)
+            else x.to(a.device)
+        )
+        a, b, c, bond_angle, bond_length, torsion_angle = [
+            ensure_tensor(x) for x in (a, b, c, bond_angle, bond_length, torsion_angle)
+        ]
+        unit_vec = lambda x: x / torch.linalg.norm(x, dim=-1, keepdim=True)
+        cross = lambda x, y: torch.linalg.cross(x, y, dim=-1)
+
+    ab = b - a
+    bc = unit_vec(c - b)
+    n = unit_vec(cross(ab, bc))
+    nbc = cross(n, bc)
+
+    if not use_torch:
+        m = np.stack([bc, nbc, n], axis=-1)
+        d = np.stack(
+            [
+                -bond_length * np.cos(bond_angle),
+                bond_length * np.cos(torsion_angle) * np.sin(bond_angle),
+                bond_length * np.sin(torsion_angle) * np.sin(bond_angle),
+            ],
+            axis=a.ndim - 1,
+        )
+        d = m.dot(d)
+    else:
+        m = torch.stack([bc, nbc, n], dim=-1)
+        d = torch.stack(
+            [
+                -bond_length * torch.cos(bond_angle),
+                bond_length * torch.cos(torsion_angle) * torch.sin(bond_angle),
+                bond_length * torch.sin(torsion_angle) * torch.sin(bond_angle),
+            ],
+            dim=a.ndim - 1,
+        ).type(m.dtype)
+        d = torch.matmul(m, d).squeeze()
+
+    return d + c
+
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -60,7 +137,7 @@ def add_oxygen_to_backbone(structure: struct.AtomArray) -> struct.AtomArray:
                 structure[i + 1].coord,
             )
             oxy = struct.Atom(
-                coord=nerf.place_dihedral(
+                coord=place_dihedral(
                     retval[-3].coord,
                     retval[-2].coord,
                     retval[-1].coord,

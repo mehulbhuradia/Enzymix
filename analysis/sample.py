@@ -180,3 +180,5 @@ def generate(count,folder_path="generated/"):
         fasta_file.write(fasta_content)
 
 generate(10,"generated/100/")
+
+# TODO: Add oxygen to backbone
