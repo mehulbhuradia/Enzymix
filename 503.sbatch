@@ -14,4 +14,4 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
-srun python train.py --wandb --tag baseline
+srun python train.py --wandb --tag af50_4_1k --min_len 95 --path /tudelft.net/staff-umbrella/DIMA/Enzymix/af_50_processed --num_steps 1000
