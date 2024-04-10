@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=8   
 #SBATCH --mem-per-cpu=64G
 #SBATCH --mail-type=END     
-#SBATCH --gres=gpu:a40
+#SBATCH --gres=gpu
 
 module use /opt/insy/modulefiles
 module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
