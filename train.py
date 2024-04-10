@@ -25,7 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='Both')
     parser.add_argument('--resume', type=str, default=None)
     parser.add_argument('--wandb', action='store_true', default=False)
-    parser.add_argument('--layers', type=int, default=8)
+    parser.add_argument('--layers', type=int, default=4)
     
     # Task options
     parser.add_argument('--only_ca', action='store_true', default=False)
