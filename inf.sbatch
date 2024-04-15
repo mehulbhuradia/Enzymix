@@ -1,8 +1,8 @@
 #!/bin/sh
 #SBATCH --partition=general,insy
-#SBATCH --job-name=F_Enzymix
+#SBATCH --job-name=8500_inf
 #SBATCH --qos=infinite         
-#SBATCH --time=300:00:00      
+#SBATCH --time=600:00:00      
 #SBATCH --ntasks=1         
 #SBATCH --cpus-per-task=2   
 #SBATCH --mem-per-cpu=100G
@@ -14,4 +14,4 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
-srun python train.py --wandb --tag af50_1000_inf --min_len 95 --path /tudelft.net/staff-umbrella/DIMA/Enzymix/af_50_processed --num_steps 1000
+srun python train.py --wandb --tag 500_inf --num_steps 500
