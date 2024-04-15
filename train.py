@@ -140,6 +140,7 @@ if __name__ == '__main__':
         optimizer.load_state_dict(ckpt['optimizer'])
         print('Resuming scheduler states...')
         scheduler.load_state_dict(ckpt['scheduler'])
+        print('Resuming from iteration %d' % it_first)
 
     # Train
     def train(it):
