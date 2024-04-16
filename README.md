@@ -41,6 +41,12 @@ conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvi
 conda install packaging
 pip install graphein --user
 
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+conda config --set channel_priority strict
+
+conda install bioconda::tmalign
 
 
 
