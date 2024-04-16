@@ -21,7 +21,7 @@ from scipy import stats
 from biotite import structure as struc
 from biotite.structure.io.pdb import PDBFile
 
-from bin.annot_secondary_structures import count_structures_in_pdb
+from annot_secondary_structures import count_structures_in_pdb
 
 from foldingdiff import tmalign
 from foldingdiff.angles_and_coords import get_pdb_length
