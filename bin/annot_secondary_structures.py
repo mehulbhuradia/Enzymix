@@ -29,36 +29,36 @@ from biotite.structure.io.pdb import PDBFile
 
 SSE_BACKEND = Literal["dssp", "psea"]
 
-from train import get_train_valid_test_sets
+# from train import get_train_valid_test_sets
 
 from foldingdiff.angles_and_coords import get_pdb_length
 
 
-def build_datasets(training_args: Dict[str, Any]):
-    """
-    Build datasets given args again
-    """
-    # Build args based on training args
-    dset_args = dict(
-        timesteps=training_args["timesteps"],
-        variance_schedule=training_args["variance_schedule"],
-        max_seq_len=training_args["max_seq_len"],
-        min_seq_len=training_args["min_seq_len"],
-        var_scale=training_args["variance_scale"],
-        syn_noiser=training_args["syn_noiser"],
-        exhaustive_t=training_args["exhaustive_validation_t"],
-        single_angle_debug=training_args["single_angle_debug"],
-        single_time_debug=training_args["single_timestep_debug"],
-        toy=training_args["subset"],
-        angles_definitions=training_args["angles_definitions"],
-        train_only=False,
-    )
+# def build_datasets(training_args: Dict[str, Any]):
+#     """
+#     Build datasets given args again
+#     """
+#     # Build args based on training args
+#     dset_args = dict(
+#         timesteps=training_args["timesteps"],
+#         variance_schedule=training_args["variance_schedule"],
+#         max_seq_len=training_args["max_seq_len"],
+#         min_seq_len=training_args["min_seq_len"],
+#         var_scale=training_args["variance_scale"],
+#         syn_noiser=training_args["syn_noiser"],
+#         exhaustive_t=training_args["exhaustive_validation_t"],
+#         single_angle_debug=training_args["single_angle_debug"],
+#         single_time_debug=training_args["single_timestep_debug"],
+#         toy=training_args["subset"],
+#         angles_definitions=training_args["angles_definitions"],
+#         train_only=False,
+#     )
 
-    train_dset, valid_dset, test_dset = get_train_valid_test_sets(**dset_args)
-    logging.info(
-        f"Training dset contains features: {train_dset.feature_names} - angular {train_dset.feature_is_angular}"
-    )
-    return train_dset, valid_dset, test_dset
+#     train_dset, valid_dset, test_dset = get_train_valid_test_sets(**dset_args)
+#     logging.info(
+#         f"Training dset contains features: {train_dset.feature_names} - angular {train_dset.feature_is_angular}"
+#     )
+#     return train_dset, valid_dset, test_dset
 
 
 def count_structures_in_pdb(
@@ -211,32 +211,32 @@ def build_parser():
     return parser
 
 
-def main():
-    """Run the script"""
-    parser = build_parser()
-    args = parser.parse_args()
+# def main():
+#     """Run the script"""
+#     parser = build_parser()
+#     args = parser.parse_args()
 
-    fnames = args.infiles
-    is_test_data = False
-    if len(fnames) == 1 and fnames[0].endswith(".json"):
-        is_test_data = True
-        with open(fnames[0]) as source:
-            training_args = json.load(source)
-        _, _, test_dset = build_datasets(training_args)
-        fnames = test_dset.filenames
+#     fnames = args.infiles
+#     is_test_data = False
+#     if len(fnames) == 1 and fnames[0].endswith(".json"):
+#         is_test_data = True
+#         with open(fnames[0]) as source:
+#             training_args = json.load(source)
+#         _, _, test_dset = build_datasets(training_args)
+#         fnames = test_dset.filenames
 
-    make_ss_cooccurrence_plot(
-        pdb_files=fnames,
-        outpdf=args.outpdf,
-        json_file=args.json,
-        backend=args.backend,
-        threads=args.threads,
-        title=args.title,
-        max_seq_len=test_dset.dset.pad if is_test_data else 0,
-        vmax=args.freqlim if args.freqlim > 0 else None,
-    )
+#     make_ss_cooccurrence_plot(
+#         pdb_files=fnames,
+#         outpdf=args.outpdf,
+#         json_file=args.json,
+#         backend=args.backend,
+#         threads=args.threads,
+#         title=args.title,
+#         max_seq_len=test_dset.dset.pad if is_test_data else 0,
+#         vmax=args.freqlim if args.freqlim > 0 else None,
+#     )
 
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    main()
+# if __name__ == "__main__":
+#     logging.basicConfig(level=logging.INFO)
+#     main()
