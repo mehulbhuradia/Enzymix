@@ -14,4 +14,4 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
-srun python train.py --wandb --tag 16_500 --layers 16 --num_steps 500
+srun python train.py --wandb --tag 8_1000 --layers 8 --num_steps 1000
