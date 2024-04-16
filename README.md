@@ -90,3 +90,6 @@ Additional layers 0
 layers 8 
 nodefeatures 1024
 no residual was good
+
+
+python bin/pdb_to_residue_proteinmpnn.py generated/100/pdb/
