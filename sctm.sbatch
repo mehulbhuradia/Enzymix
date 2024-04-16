@@ -17,6 +17,6 @@ conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 export HOME=/tmp/mbhuradia/
 
 srun python bin/pdb_to_residue_proteinmpnn.py generated/100/pdb/
-srun python bin/omegafold_across_gpus.py proteinmpnn_residues/*.fasta -g 0
+srun python bin/omegafold_across_gpus.py proteinmpnn_residues/*.fasta
 srun python bin/sctm.py -p generated/100/pdb/
 
