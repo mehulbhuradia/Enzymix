@@ -16,12 +16,12 @@ conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
 export HOME=/tmp/mbhuradia/
 
-rm - rf proteinmpnn_residues
-rm - rf generated
-rm - rf omegafold_predictions
-rm - rf sctm_scores_hist_by_len.pdf
-rm - rf sctm_scores_hist.pdf
-rm - rf sctm_scores.json
+rm -rf proteinmpnn_residues
+rm -rf generated
+rm -rf omegafold_predictions
+rm -rf sctm_scores_hist_by_len.pdf
+rm -rf sctm_scores_hist.pdf
+rm -rf sctm_scores.json
 
 srun python sample.py --resume ./logs/8_cont/checkpoints/295.pt --num_samples 10 --output /generated
 srun python esm_perp.py --in_fasta generated/fasta/generated.fasta
