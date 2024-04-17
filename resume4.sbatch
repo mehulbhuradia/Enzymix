@@ -14,4 +14,4 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
-srun python train.py --wandb --tag 8_cont --resume ./logs/8_cont/checkpoints/285.pt
+srun python train.py --wandb --tag 4_cont --resume ./logs/4_cont/checkpoints/430.pt
