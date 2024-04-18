@@ -5,7 +5,7 @@
 #SBATCH --time=168:00:00      
 #SBATCH --ntasks=1         
 #SBATCH --cpus-per-task=2   
-#SBATCH --mem-per-cpu=64G
+#SBATCH --mem-per-cpu=100G
 #SBATCH --mail-type=END     
 #SBATCH --gres=gpu:a40
 
@@ -14,4 +14,4 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
-srun python train.py --wandb --tag 8_cont4 --resume ./logs/8_cont4/checkpoints/230.pt
+srun python train.py --wandb --tag 8_cont4 --resume ./logs/8_cont4/checkpoints/280.pt

@@ -97,5 +97,7 @@ python bin/pdb_to_residue_proteinmpnn.py generated/100/pdb/
 
 
 protienmpnn takes like 10 seconds per pdb
-sbatch sctm.sbatch 
-Submitted batch job 9894827
+
+Medium job:
+sbatch sampleandanalysis.sbatch 
+Submitted batch job 9895324
