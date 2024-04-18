@@ -163,9 +163,20 @@ def generate(count,folder_path="generated/",random_sampling=True):
         os.makedirs(folder_path+"/fasta")
     for i in range(count):
         if random_sampling:
-            traj,res_len = sample_one(np.random.randint(0,len(dataset)))
+            idx = np.random.randint(0,len(dataset))
         else:
-            traj,res_len = sample_one(i)
+            idx = i
+        error_count = 0
+        while True:
+            try:
+                traj,res_len = sample_one(idx)
+                break
+            except:
+                error_count += 1
+                print("Error in sampling, trying again")
+                if error_count > 20:
+                    print("Too many errors, skipping")
+                    break
         fasta_content_i,global_counter = make_pdb(traj, res_len, global_counter,folder_path=folder_path+"/pdb/")
         fasta_content += fasta_content_i
         if global_counter >= count:
