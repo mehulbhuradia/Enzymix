@@ -176,7 +176,7 @@ def generate(count,folder_path="generated/",random_sampling=True):
                 print("Error in sampling, trying again")
                 if error_count > 20:
                     print("Too many errors, skipping")
-                    break
+                    continue
         fasta_content_i,global_counter = make_pdb(traj, res_len, global_counter,folder_path=folder_path+"/pdb/")
         fasta_content += fasta_content_i
         if global_counter >= count:
