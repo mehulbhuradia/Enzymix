@@ -30,4 +30,3 @@ srun python b_factor.py --in_folder generated/fasta/omega
 srun python bin/pdb_to_residue_proteinmpnn.py generated/pdb/
 srun python bin/omegafold_across_gpus.py proteinmpnn_residues/*.fasta
 srun python bin/sctm.py -p generated/pdb/
-

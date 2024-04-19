@@ -100,4 +100,4 @@ protienmpnn takes like 10 seconds per pdb
 
 Medium job:
 sbatch sampleandanalysis.sbatch 
-Submitted batch job 9895324
+Submitted batch job 9897064 -- 5000 samples
