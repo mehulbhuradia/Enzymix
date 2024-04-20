@@ -30,4 +30,4 @@ for i in range(0, chunks):
         file.write('conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis\n')
         file.write('\n')
         file.write('srun python sampleparallel.py --resume ./logs/8_cont/checkpoints/295.pt --num_samples 50000 --start '+str(i*chunk_size)+' --chunk '+str(chunk_size)+'\n')
-    run_sbatch('downloader_'+str(i)+'.sbatch')
+    run_sbatch('sampler_'+str(i)+'.sbatch')
