@@ -12,7 +12,7 @@ total = 100
 chunk_size = 50
 chunks = total // chunk_size
 for i in range(0, chunks):
-    with open('downloader_'+str(i)+'.sbatch', 'w') as file:
+    with open('sampler_'+str(i)+'.sbatch', 'w') as file:
         file.write('#!/bin/sh\n')
         file.write('#SBATCH --partition=general,insy\n')
         file.write('#SBATCH --job-name=Downloader\n')
