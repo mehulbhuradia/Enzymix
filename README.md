@@ -97,3 +97,6 @@ protienmpnn takes like 10 seconds per pdb
 
 -bash-4.2$ sbatch sampleandanalysis.sbatch
 Submitted batch job 9897824
+
+
+76,95,113 was not bad for greenlight

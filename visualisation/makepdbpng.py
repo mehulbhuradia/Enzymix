@@ -46,7 +46,10 @@ def pdb2png(
 ) -> str:
     """Convert the pdb file into a png, returns output filename"""
     # https://gist.github.com/bougui505/11401240
-    png_fname = pdb_fname.replace(".pdb", ".png")
+    png_fname = pdb_fname.replace(".pdb", ".png").replace("gen","gen_images")
+    new_name = png_fname.split("/")[0]+"/"+png_fname.split("/")[1]+"/"+png_fname.split("/")[3]
+    png_fname = new_name
+    os.makedirs(os.path.dirname(png_fname), exist_ok=True)
     assert png_fname.endswith(".png")
     pymol.cmd.load(pdb_fname)
     pymol.cmd.show("cartoon")
