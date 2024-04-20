@@ -57,9 +57,10 @@ def pdb2png(
     pymol.cmd.delete("*")  # So we dont' draw multiple images at once
     return png_fname
 
-pdb2png("./generated/100/pdb/0_0.pdb")
-pdb2png("./generated/100/pdb/1_0.pdb")
-pdb2png("./generated/100/pdb/2_0.pdb")
-pdb2png("./generated/100/pdb/3_0.pdb")
+# pdb2png("./generated/100/pdb/0_0.pdb")
+# pdb2png("./generated/100/pdb/1_0.pdb")
+# pdb2png("./generated/100/pdb/2_0.pdb")
+# pdb2png("./generated/100/pdb/3_0.pdb")
 
-
+for i in range(218):
+    pdb2png(f"./gen/{i}/{i}_0.pdb")
