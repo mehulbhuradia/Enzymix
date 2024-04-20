@@ -21,7 +21,7 @@ for i in range(0, chunks):
         file.write('#SBATCH --ntasks=1\n')
         file.write('#SBATCH --cpus-per-task=2\n')
         file.write('#SBATCH --mem-per-cpu=100G\n')
-        file.write('#SBATCH --gres=gpu:a40\n')
+        file.write('#SBATCH --gres=gpu\n')
         file.write('#SBATCH --mail-type=END\n')
         file.write('\n')
         file.write('module use /opt/insy/modulefiles\n')
