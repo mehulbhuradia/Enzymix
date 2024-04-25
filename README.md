@@ -99,4 +99,4 @@ protienmpnn takes like 10 seconds per pdb
 Submitted batch job 9897824
 
 
-76,95,113 was not bad for greenlight
+small sample 9899385,9899387 
