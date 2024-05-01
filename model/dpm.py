@@ -228,3 +228,102 @@ class FullDPM(nn.Module):
             traj[t] = tuple(x.cpu() for x in traj[t])    # Move previous states to cpu memory.
 
         return traj
+    
+    @torch.no_grad()
+    def sample_masked(
+        self, 
+        p, 
+        c, 
+        e,
+        batch_size,
+        sample_structure=True, sample_sequence=True,
+        pbar=False,
+        mask_size=10
+    ):
+        # L is sequence length, N is 1
+        # p_0: (N, L, 3) coordinates
+        # c_0: (N, L, 20) one-hot encoding of amino acid sequence
+        # e: [(N, L), (N, L)] edge list
+
+        edges=[]
+        for edge in e:
+            edges.append(edge.squeeze(0))
+
+        N, L = p.shape[:2]
+
+        mask_generate = torch.full((N,L), False, dtype=torch.bool, device = p.device) #or 0s?
+        mask_L = mask_size
+        
+        mask_idx=0#torch.randint(0, L - mask_L, (1,)).item()
+
+        # Ensure mask is within sequence length
+        while mask_idx + mask_L > L:
+            mask_idx-=1
+
+        mask_generate[:, mask_idx:mask_idx+mask_L] = True
+
+        
+        p = self._normalize_position(p)
+        
+        s=self.trans_seq._sample(c) # c_0 should be N,L,20
+
+        # Set the orientation and position of residues to be predicted to random values
+        if sample_structure:
+            p_rand = torch.randn_like(p)
+            # Add noise to positions
+            # p_rand, eps_p = self.trans_pos.add_noise(p, mask_generate, 50)
+            p_init = torch.where(mask_generate[:, :, None].expand_as(p), p_rand, p)
+        else:
+            p_init = p
+
+        if sample_sequence:
+            s_rand = torch.randint_like(s, low=0, high=19)
+            s_init = torch.where(mask_generate, s_rand, s)
+        else:
+            s_init = s
+
+        traj = {self.num_steps: (self._unnormalize_position(p_init), s_init)}
+        if pbar:
+            pbar = functools.partial(tqdm, total=self.num_steps, desc='Sampling')
+        else:
+            pbar = lambda x: x
+        for t in pbar(range(self.num_steps, 0, -1)):
+            p_t, s_t = traj[t]
+            p_t = self._normalize_position(p_t)
+            
+            t_tensor = torch.full([N, ], fill_value=t, dtype=torch.long, device=self._dummy.device)
+
+            beta = self.trans_pos.var_sched.betas[t].expand([N, ])
+            t_embed = torch.stack([beta, torch.sin(beta), torch.cos(beta)], dim=-1)[:, None, :].squeeze(0).expand(L, 3) # (L, 3)
+            
+            c_t = clampped_one_hot(s_t, num_classes=20).float() # (N, L, K).
+
+            p_t=p_t.squeeze(0) # L,3
+            c_t=c_t.squeeze(0) # L,20        
+    
+            c_denoised , eps_p = self.eps_net(h=c_t, x=p_t.clone().detach(), t=t_embed, edges=edges,batch_size=batch_size) #(L x 23), (L x 3)
+
+            # Softmax
+            c_denoised = F.softmax(c_denoised, dim=-1)        
+            c_denoised = c_denoised.unsqueeze(0) # (1, L, 20)
+            eps_p = eps_p.unsqueeze(0)
+            p_t = p_t.unsqueeze(0)
+
+            if (torch.isnan(eps_p).any().item()):
+                print("eps_p has nan",t)
+                if (torch.isnan(c_denoised).any().item()):
+                    print("c_denoised has nan",t)
+                raise KeyboardInterrupt()
+            
+            p_next = self.trans_pos.denoise(p_t, eps_p, mask_generate, t_tensor)
+            _, s_next = self.trans_seq.denoise(s_t, c_denoised, mask_generate, t_tensor)
+
+            if not sample_structure:
+                p_next = p_t
+            if not sample_sequence:
+                s_next = s_t
+
+            traj[t-1] = (self._unnormalize_position(p_next), s_next)
+            traj[t] = tuple(x.cpu() for x in traj[t])    # Move previous states to cpu memory.
+
+        return traj,s,p
