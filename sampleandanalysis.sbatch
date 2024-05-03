@@ -23,7 +23,7 @@ rm -rf sctm_scores_hist_by_len.pdf
 rm -rf sctm_scores_hist.pdf
 rm -rf sctm_scores.json
 
-srun python sample.py --resume ./logs/8_cont/checkpoints/295.pt --num_samples 50000
+srun python sample.py --resume ./logs/8_cont2/checkpoints/530.pt --num_samples 100
 srun python esm_perp.py --in_fasta generated/fasta/generated.fasta
 srun python bin/omegafold_across_gpus.py generated/fasta/generated.fasta -o generated/fasta/omega
 srun python b_factor.py --in_folder generated/fasta/omega

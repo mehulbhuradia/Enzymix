@@ -103,3 +103,4 @@ small sample 9899385,9899387
 
 
 sample1k final 9926948
+only sctm 9928056

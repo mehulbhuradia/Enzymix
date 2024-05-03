@@ -134,16 +134,21 @@ def main():
 
     pdb_fnames = list(glob(os.path.join(args.dirname, "*.pdb")))
     logging.info(f"Running ProteinMPNN on {len(pdb_fnames)} PDB files")
-
+    errors=0
     for pdb_fname in tqdm(pdb_fnames):
-        seqs = generate_residues_proteinmpnn(
-            pdb_fname, n_sequences=args.num, temperature=args.temperature
-        )
-        for i, seq in enumerate(seqs):
-            out_fname = update_fname(pdb_fname, i, new_dir=args.outdir)
-            write_fasta(
-                out_fname, seq, seqname=os.path.splitext(os.path.basename(out_fname))[0]
+        try:
+            seqs = generate_residues_proteinmpnn(
+                pdb_fname, n_sequences=args.num, temperature=args.temperature
             )
+            for i, seq in enumerate(seqs):
+                out_fname = update_fname(pdb_fname, i, new_dir=args.outdir)
+                write_fasta(
+                    out_fname, seq, seqname=os.path.splitext(os.path.basename(out_fname))[0]
+                )
+        except Exception as e:
+            logging.error(f"Failed to process {pdb_fname}: {e}")
+            errors+=1
+    logging.info(f"Failed to process {errors} PDB files")
 
 
 if __name__ == "__main__":
