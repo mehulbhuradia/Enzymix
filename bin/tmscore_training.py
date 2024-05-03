@@ -21,7 +21,7 @@ from foldingdiff import tmalign
 
 def compute_training_tm_scores(
     pdb_files: Collection[str],
-    train_dset,
+    train_files,
     outdir: Path,
     nthreads: int = mp.cpu_count(),
 ):
@@ -31,7 +31,7 @@ def compute_training_tm_scores(
         samp_name = os.path.splitext(os.path.basename(fname))[0]
         tm_score, tm_score_ref = tmalign.max_tm_across_refs(
             fname,
-            train_dset.filenames,
+            train_files,
             n_threads=nthreads,
         )
         all_tm_scores[samp_name] = tm_score
@@ -56,6 +56,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-n", "--nsubset", type=int, default=0, help="Take only first n hits, 0 ignore"
     )
+    parser.add_argument(
+        "-t",
+        "--train_path",
+        type=str,
+        default=os.path.join(os.getcwd(), "swiss_prot_pdbs"),
+        help="Path to training dataset",
+    )
     return parser
 
 
@@ -79,10 +86,10 @@ def main():
     # we only need the filenames from the training dataset so it doesn't really matter
     # what specific parameters we use to initialize it. The only important parameters are
     # min_length, which is default to 40 and likely unchanged
-    train_dset = CathCanonicalAnglesDataset(split="train")
-
+    train_files = os.listdir(args.train_path)
+      
     # Calculate scores
-    compute_training_tm_scores(generated_pdbs, train_dset, Path(args.dirname))
+    compute_training_tm_scores(generated_pdbs, train_files, Path(args.dirname))
 
 
 if __name__ == "__main__":
