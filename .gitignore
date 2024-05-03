@@ -27,3 +27,6 @@ generated/
 extras/
 af_50/
 gen_images/
+cath/
+cath_test/
+cath_train/
