@@ -30,8 +30,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--device', type=str, default='cuda')
 parser.add_argument('--resume', type=str, default="./logs/8_cont/checkpoints/295.pt")
 parser.add_argument('--layers', type=int, default=8)
-parser.add_argument('--start', type=int, default=0)
-parser.add_argument('--chunk', type=int, default=10000)
 
 # Task options
 parser.add_argument('--only_ca', action='store_true', default=False)
@@ -45,7 +43,7 @@ parser.add_argument('--path', type=str, default='/tudelft.net/staff-umbrella/DIM
 
 # Args only for sampling
 parser.add_argument('--num_samples', type=int, default=10000)
-parser.add_argument('--output', type=str, default='generated_parallel/')
+parser.add_argument('--output', type=str, default='generated/')
 
 args = parser.parse_args()
 
@@ -112,85 +110,26 @@ def sample_one(idx):
     one_hot=one_hot.unsqueeze(0).to(args.device)
     edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
     batch_size = torch.tensor([batch_size]).to(args.device)
-    traj = model.sample(coords, one_hot, edges,batch_size, pbar=True, sample_structure=True, sample_sequence=True)
-    return traj,res_len
+    percent_exact_matches = model.fixbb(coords, one_hot, edges,batch_size, pbar=True, sample_structure=False, sample_sequence=True)
+    return percent_exact_matches,res_len
 
 
-def make_pdb(traj, res_len, global_counter,folder_path="generated/pdb",num=0):
-    sequences=traj[num][1].squeeze(0)
-    sequence_list = split_array(sequences, res_len)
-    positions=traj[num][0].detach().to("cpu").squeeze(0).numpy()
-    positions_list = split_array(positions, res_len)
 
-    # Make PDB file and fasta sequences
-    fasta_content = ""
-    for i in range(len(sequence_list)):
-        sequence_name = []
-        sequence_fasta = ""
-        for j in sequence_list[i].tolist():
-            sequence_name.append(amino_acids[j])
-            sequence_fasta+=BASE_AMINO_ACIDS[j]
-        residues=[]
-        for j in range(len(sequence_name)):
-            temp = {}
-            temp['name'] = sequence_name[j]
-            temp['CA'] = positions_list[i][j][:3].tolist()
-            temp['CB'] = positions_list[i][j][3:6].tolist()
-            temp['CN'] = positions_list[i][j][6:].tolist()
-            residues.append(temp)
-        create_pdb_file(residues, folder_path+str(global_counter)+"_"+str(num)+".pdb")
-        sequence_id = str(global_counter)+"_"+str(num)
-        fasta_seq = split_array(sequence_fasta, 60)
-        fasta_content += f">{sequence_id}"
-        for fs in fasta_seq:
-            fasta_content += f"\n{''.join(fs)}"
-        fasta_content += "\n"
-        global_counter+=1
-
-    return fasta_content, global_counter
-
-
-def generate(count,folder_path="generated/",random_sampling=True,start=0,chunk=10000):
+def generate(count,folder_path="generated/",random_sampling=True):
     print(random_sampling)
     if count > dataset.size():
         count = dataset.size()
     global_counter = 0
-    fasta_content = ""
-    # Create folder for generated PDB files
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-    if not os.path.exists(folder_path+"/pdb"):
-        os.makedirs(folder_path+"/pdb")
-    if not os.path.exists(folder_path+"/fasta"):
-        os.makedirs(folder_path+"/fasta")
-    for i in range(start,start+chunk):
+    aars=[]
+    for i in range(count):
         if random_sampling:
             idx = np.random.randint(0,len(dataset))
         else:
             idx = i
-        error_count = 0
-        while True:
-            try:
-                traj,res_len = sample_one(idx)
-                break
-            except:
-                error_count += 1
-                print("Error in sampling, trying again")
-                if error_count > 20:
-                    print("Too many errors, skipping")
-                    continue
-        fasta_content_i,global_counter = make_pdb(traj, res_len, global_counter,folder_path=folder_path+"/pdb/")
-        fasta_content += fasta_content_i
-        if global_counter >= count:
-            break
-    fasta_filename = folder_path + "fasta/" + "generated.fasta"
-    with open(fasta_filename, "w") as fasta_file:
-        fasta_file.write(fasta_content)
+        percent_exact_matches,res_len = sample_one(idx)
+        aars.append(percent_exact_matches)
+    print("Average percent of exact matches: ",np.mean(aars))
 
-
-generate(args.num_samples,args.output,random_sampling=False,start=args.start,chunk=args.chunk)
+generate(args.num_samples,args.output,random_sampling=args.num_samples<dataset.size())
 
 # Takes max 2 minutes per sequence
-
-
-# Set it up to use different seeds when sampling in parallel
