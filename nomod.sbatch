@@ -1,6 +1,6 @@
 #!/bin/sh
 #SBATCH --partition=general,insy
-#SBATCH --job-name=F_Enzymix
+#SBATCH --job-name=nomod81k
 #SBATCH --qos=long         
 #SBATCH --time=168:00:00      
 #SBATCH --ntasks=1         
@@ -14,4 +14,4 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
-srun python train.py --wandb --tag 8_contcont500 --resume ./logs/8_contcont500/checkpoints/440.pt --num_steps 500
+srun python train.py --wandb --tag nomod81k --num_steps 1000

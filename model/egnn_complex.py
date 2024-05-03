@@ -47,7 +47,7 @@ class E_GCL(nn.Module):
             coord_mlp_layers.append(nn.Linear(hidden_nf, hidden_nf))
             coord_mlp_layers.append(act_fn)
         
-        layer = nn.Linear(hidden_nf, x_dim*x_dim) #used to have bias=False
+        layer = nn.Linear(hidden_nf, 1) #used to have bias=False
         torch.nn.init.xavier_uniform_(layer.weight, gain=0.001) # important for some reason, code breaks when i remove it
         coord_mlp_layers.append(layer)
         
@@ -90,10 +90,7 @@ class E_GCL(nn.Module):
 
     def coord_model(self, coord, edge_index, coord_diff, edge_feat):
         row, col = edge_index
-        phi_x=self.coord_mlp(edge_feat)
-        phi_x = phi_x.view(phi_x.shape[0],self.x_dim,self.x_dim)
-        coord_diff = coord_diff.unsqueeze(1)
-        trans = torch.bmm(coord_diff,phi_x).squeeze(1)
+        trans = coord_diff * self.coord_mlp(edge_feat)
         if self.coords_agg == 'sum':
             agg = unsorted_segment_sum(trans, row, num_segments=coord.size(0))
         elif self.coords_agg == 'mean':
