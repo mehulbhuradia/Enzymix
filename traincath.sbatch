@@ -14,4 +14,4 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
-srun python train.py --wandb --tag cathfinetune --resume ./logs/cath/checkpoints/final.pt --num_steps 1000 --path ./cath_train --test_size 0
+srun python train.py --wandb --tag cathscratch --num_steps 1000 --path ./cath_train --test_size 0
