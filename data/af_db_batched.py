@@ -8,7 +8,7 @@ def split_array(input_array, chunk_size):
   return [input_array[i:i + chunk_size] for i in range(0, len(input_array), chunk_size)]
 
 class ProtienStructuresDataset(Dataset):
-  def __init__(self, path='./processed_big_atoms',max_len=300,min_len=50,batch_size=8,only_ca=False):
+  def __init__(self, path='./processed_big_atoms',max_len=300,min_len=50,batch_size=8,only_ca=False,test_size=100):
     self.only_ca = only_ca
     self.lengths = []
     length_map = {}
@@ -18,7 +18,7 @@ class ProtienStructuresDataset(Dataset):
     # Exclusing the first 100 pdb files as the test set
     for pdb in os.listdir(path):
       count += 1
-      if count < 100:
+      if count < test_size:
         self.test_set.append(path + "/" + pdb)
         continue
       length=pdb.split('_')[2].split('.')[0]

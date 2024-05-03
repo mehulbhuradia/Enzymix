@@ -36,7 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_len', type=int, default=100)
     parser.add_argument('--min_len', type=int, default=50)
     parser.add_argument('--path', type=str, default='/tudelft.net/staff-umbrella/DIMA/swiss_p')
-    
+    parser.add_argument('--test_size', type=int, default=100)
     
     args = parser.parse_args()
 
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         x_dim = 9
         print('Using all 3 atoms')
 
-    dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len, min_len=config.train.min_len,batch_size=config.train.batch_size,only_ca=args.only_ca)
+    dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len, min_len=config.train.min_len,batch_size=config.train.batch_size,only_ca=args.only_ca,test_size=args.test_size)
     
     # start a new wandb run to track this script
     wandb_config = {"args": args,
