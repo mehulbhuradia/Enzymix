@@ -81,17 +81,29 @@ def main():
     assert os.path.isdir(args.folded)
     assert os.path.isdir(args.predicted), f"Directory not found: {args.predicted}"
 
-    orig_predicted_backbones = glob(os.path.join(args.predicted, "*.pdb"))
+    orig = glob(os.path.join(args.predicted, "*.pdb"))
+    
+    orig_predicted_backbone_lens={}
+    orig_predicted_backbone_names=[]
+    orig_predicted_backbones = []
+    error_count = 0
+    for f in orig:
+        try:
+            o_len = get_pdb_length(f)
+            o_name = os.path.splitext(os.path.basename(f))[0]
+            orig_predicted_backbone_lens[os.path.splitext(os.path.basename(f))[0]] = o_len
+            orig_predicted_backbone_names.append(o_name)
+            orig_predicted_backbones.append(f)
+        except Exception as e:
+            error_count += 1
+            logging.error(f"Error processing {f}: {e}")
+            continue
+    logging.info(
+        f"Processed {len(orig_predicted_backbones)} structures, {error_count} errors"
+    )
     logging.info(
         f"Computing scTM scores across {len(orig_predicted_backbones)} generated structures"
     )
-    orig_predicted_backbone_lens = {
-        os.path.splitext(os.path.basename(f))[0]: get_pdb_length(f)
-        for f in orig_predicted_backbones
-    }
-    orig_predicted_backbone_names = [
-        os.path.splitext(os.path.basename(f))[0] for f in orig_predicted_backbones
-    ]
     with mp.Pool(mp.cpu_count()) as pool:
         ss_counts = list(
             pool.map(count_structures_in_pdb, orig_predicted_backbones, chunksize=10)

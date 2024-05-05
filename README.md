@@ -103,4 +103,6 @@ small sample 9899385,9899387
 
 
 sample1k final 9926948
-only sctm 9928056
+only omsctm 9928310 om failed
+sctm on 7k 9928683
+sctm len error
