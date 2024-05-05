@@ -83,12 +83,7 @@ def main():
         logging.info(f"Subsetting to the first {args.nsubset} pdb files")
         generated_pdbs = generated_pdbs[: args.nsubset]
 
-    # we only need the filenames from the training dataset so it doesn't really matter
-    # what specific parameters we use to initialize it. The only important parameters are
-    # min_length, which is default to 40 and likely unchanged
-    train_files = os.listdir(args.train_path)
-    print(train_files)
-    print(generated_pdbs)
+    train_files = glob(os.path.join(args.train_path, "*.pdb"))
       
     # Calculate scores
     compute_training_tm_scores(generated_pdbs, train_files, Path(args.dirname))

@@ -15,8 +15,4 @@ conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
 export HOME=/tmp/mbhuradia/
 
-rm -rf sctm_scores_hist_by_len.pdf
-rm -rf sctm_scores_hist.pdf
-rm -rf sctm_scores.json
-
 srun python bin/tmscore_training.py
