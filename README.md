@@ -106,3 +106,5 @@ sample1k final 9926948
 only omsctm 9928310 om failed
 sctm on 7k 9928683
 sctm len error
+
+sctm 9928693
