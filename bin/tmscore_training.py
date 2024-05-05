@@ -87,6 +87,8 @@ def main():
     # what specific parameters we use to initialize it. The only important parameters are
     # min_length, which is default to 40 and likely unchanged
     train_files = os.listdir(args.train_path)
+    print(train_files)
+    print(generated_pdbs)
       
     # Calculate scores
     compute_training_tm_scores(generated_pdbs, train_files, Path(args.dirname))
