@@ -50,7 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-d",
         "--dirname",
         type=str,
-        default=os.path.join(os.getcwd(), "sampled_pdb"),
+        default=os.path.join(os.getcwd(), "generated/pdb"),
         help="Directory of generated PDB structures",
     )
     parser.add_argument(
