@@ -16,12 +16,10 @@ conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
 export HOME=/tmp/mbhuradia/
 
-rm -rf proteinmpnn_residues
 rm -rf omegafold_predictions
 rm -rf sctm_scores_hist_by_len.pdf
 rm -rf sctm_scores_hist.pdf
 rm -rf sctm_scores.json
 
-srun python bin/pdb_to_residue_proteinmpnn.py generated/pdb/
 srun python bin/omegafold_across_gpus.py proteinmpnn_residues/*.fasta
 srun python bin/sctm.py -p generated/pdb/
