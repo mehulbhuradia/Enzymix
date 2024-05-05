@@ -19,4 +19,4 @@ rm -rf sctm_scores_hist_by_len.pdf
 rm -rf sctm_scores_hist.pdf
 rm -rf sctm_scores.json
 
-srun python bin/tmscore_training.py -p generated/pdb/
+srun python bin/tmscore_training.py
