@@ -35,7 +35,7 @@ def get_sctm_score(orig_pdb: Path, folded_dirname: Path) -> Tuple[float, str]:
     # if len(folded_pdbs) > 8:
     #     folded_pdbs = folded_pdbs[:8]
     # assert len(folded_pdbs) <= 8
-    # print(f"Processing {orig_pdb} with {len(folded_pdbs)} structures")
+    print(f"Processing {orig_pdb} with {len(folded_pdbs)} structures")
     # if len(folded_pdbs) < 8:
     #     logging.warning(
     #         f"Fewer than 8 (n={len(folded_pdbs)}) structures corresponding to {orig_pdb}"
