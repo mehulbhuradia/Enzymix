@@ -13,9 +13,9 @@ def run_sbatch(script_path):
 allfiles = os.listdir('./proteinmpnn_residues')
 total = len(allfiles)
 fullpaths = [os.path.join('./proteinmpnn_residues', f) for f in allfiles]
-chunk_size = 10
+chunk_size = 4
 chunks = total // chunk_size
-chunks = 5
+chunks = 2
 
 for i in range(0, chunks):
     with open('om'+str(i)+'.sbatch', 'w') as file:

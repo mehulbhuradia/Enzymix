@@ -59,7 +59,7 @@ def write_fasta(sequences: Dict[str, str], out_fname: str):
                 sink.write(segment + "\n")
 
 
-def run_omegafold(input_fasta: str, outdir: str, gpu: int, weights: str = ""):
+def run_omegafold(input_fasta: str, outdir: str, gpu: int, weights: str = "",start=0):
     """
     Runs omegafold on the given fasta file
     """
@@ -74,7 +74,7 @@ def run_omegafold(input_fasta: str, outdir: str, gpu: int, weights: str = ""):
 
     bname = os.path.splitext(os.path.basename(input_fasta))[0]
     with open(
-        os.path.join(outdir, f"omegafold_{bname}_gpu_{gpu}.stdout"), "wb"
+        os.path.join(outdir, f"omegafold_{bname}_gpu_{gpu}_start_{start}.stdout"), "wb"
     ) as sink:
         output = subprocess.call(cmd, shell=True, stdout=sink)
 
@@ -114,6 +114,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=list(range(torch.cuda.device_count())),
         help="GPUs to use",
     )
+    parser.add_argument('--start', type=int, default=0)
     return parser
 
 
@@ -146,13 +147,13 @@ def main():
 
     processes = []
     for i, key_chunk in enumerate(all_keys_split):
-        fasta_filename = os.path.join(args.outdir, f"{i}_omegafold_input.fasta")
+        fasta_filename = os.path.join(args.outdir, f"{i}_start_{args.start}_omegafold_input.fasta")
         assert not os.path.exists(fasta_filename)
         logging.info(f"Writing {len(key_chunk)} sequences to {fasta_filename}")
         write_fasta({k: input_sequences[k] for k in key_chunk}, fasta_filename)
         proc = mp.Process(
             target=run_omegafold,
-            args=(fasta_filename, args.outdir, args.gpus[i], args.weights),
+            args=(fasta_filename, args.outdir, args.gpus[i], args.weights,args.start),
         )
         proc.start()
     for p in processes:
