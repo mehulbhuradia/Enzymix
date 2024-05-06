@@ -29,7 +29,7 @@ for i in range(0, chunks):
         file.write('#SBATCH --cpus-per-task=2\n')
         file.write('#SBATCH --mem-per-cpu=32G\n')
         file.write('#SBATCH --mail-type=END\n')
-        file.write('#SBATCH --gres=gpu:a40\n')
+        file.write('#SBATCH --gres=gpu\n')
         file.write('\n')
         file.write('module use /opt/insy/modulefiles\n')
         file.write('module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10\n')
