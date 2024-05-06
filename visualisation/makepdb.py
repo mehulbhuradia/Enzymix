@@ -1,6 +1,6 @@
 from Bio.PDB import Atom, Model, Chain, Residue, Structure, PDBIO
 
-def create_pdb_file(data, output_filename):
+def create_pdb_file(data, output_filename,onlyca=False):
     # Create a Biopython Structure
     structure = Structure.Structure('example_structure')
 
@@ -13,9 +13,10 @@ def create_pdb_file(data, output_filename):
     # Add atoms to the chain
     for index, entry in enumerate(data, start=1):
         residue = Residue.Residue((' ', index, ' '), entry['name'], index)
-        residue.add(Atom.Atom('N', entry['CN'], 0, 0, ' ', 'N', index, 'N'))
+        if not onlyca:
+            residue.add(Atom.Atom('N', entry['N'], 0, 0, ' ', 'N', index, 'N'))
+            residue.add(Atom.Atom('C', entry['C'], 0, 0, ' ', 'C', index, 'C'))
         residue.add(Atom.Atom('CA', entry['CA'], 0, 0, ' ', 'CA', index, 'C'))
-        residue.add(Atom.Atom('C', entry['CB'], 0, 0, ' ', 'C', index, 'C'))
         chain.add(residue)
 
     # Add the chain to the model

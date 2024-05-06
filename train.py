@@ -29,7 +29,7 @@ if __name__ == '__main__':
     
     # Task options
     parser.add_argument('--only_ca', action='store_true', default=False)
-    parser.add_argument('--num_steps', type=int, default=100)
+    parser.add_argument('--num_steps', type=int, default=1000)
 
     # Configurations
     parser.add_argument('--batch_size', type=int, default=2)

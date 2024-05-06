@@ -185,7 +185,7 @@ class EGNN(nn.Module):
             h, x, _ = self._modules["egcl_%d" % i](h, edges, x)
             
             if (torch.isnan(x).any().item()):
-                print("NAN in x at layer %d" % i)
+                # print("NAN in x at layer %d" % i)
                 raise KeyboardInterrupt()
             
             h = self._modules["embedding_out_%d" % i](h)

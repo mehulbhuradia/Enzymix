@@ -133,8 +133,8 @@ def make_pdb(traj, res_len, global_counter,folder_path="generated/pdb",num=0):
             temp = {}
             temp['name'] = sequence_name[j]
             temp['CA'] = positions_list[i][j][:3].tolist()
-            temp['CB'] = positions_list[i][j][3:6].tolist()
-            temp['CN'] = positions_list[i][j][6:].tolist()
+            temp['C'] = positions_list[i][j][3:6].tolist()
+            temp['N'] = positions_list[i][j][6:].tolist()
             residues.append(temp)
         create_pdb_file(residues, folder_path+str(global_counter)+"_"+str(num)+".pdb")
         sequence_id = str(global_counter)+"_"+str(num)
