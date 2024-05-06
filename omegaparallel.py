@@ -10,13 +10,11 @@ def run_sbatch(script_path):
     except Exception as e:
         print(f"Error running sbatch command: {e} {command}")
 
-
 allfiles = os.listdir('./proteinmpnn_residues')
 total = len(allfiles)
 fullpaths = [os.path.join('./proteinmpnn_residues', f) for f in allfiles]
-chunk_size = 4
+chunk_size = 1000
 chunks = total // chunk_size
-chunks = 2
 
 for i in range(0, chunks):
     with open('om'+str(i)+'.sbatch', 'w') as file:
