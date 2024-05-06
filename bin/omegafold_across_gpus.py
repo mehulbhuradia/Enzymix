@@ -122,7 +122,7 @@ def main():
     parser = build_parser()
     args = parser.parse_args()
 
-    os.makedirs(args.outdir, exist_ok=False)
+    os.makedirs(args.outdir, exist_ok=True)
 
     # Read in input files
     input_sequences = {}
