@@ -13,9 +13,6 @@ total = 1000
 chunk_size = 4
 chunks = total // chunk_size
 
-chunks = 2
-chunk_size = 1
-
 for i in range(0, chunks):
     with open('tm_'+str(i)+'.sbatch', 'w') as file:
         file.write('#!/bin/sh\n')
