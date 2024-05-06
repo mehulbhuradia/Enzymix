@@ -36,5 +36,5 @@ for i in range(0, chunks):
         file.write('conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis\n')
         file.write('\n')
         fastas = ' '.join(fullpaths[i*chunk_size:(i+1)*chunk_size])
-        file.write('srun python bin/omegafold_across_gpus.py '+fastas+'\n')
+        file.write('srun python bin/omegafold_across_gpus.py '+fastas+' --start '+str(i*chunk_size)+'\n')
     run_sbatch('om'+str(i)+'.sbatch')
