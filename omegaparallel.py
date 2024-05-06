@@ -1,6 +1,6 @@
 # make a .sbatch file with the following content:
 import os 
-os.remove('./omegafold_predictions')
+os.rmdir('./omegafold_predictions')
 def run_sbatch(script_path):
     command = f'sbatch {script_path}'
     try:
