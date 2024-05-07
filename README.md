@@ -112,5 +112,10 @@ sctm 9928693
 
 
 
-9930376 SCTM
+
 9928845 traintm
+
+ompSubmitted batch job 9940045
+sbatch command executed successfully.
+Submitted batch job 9940046
+sbatch command executed successfully.

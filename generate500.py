@@ -150,8 +150,9 @@ def generate(folder_path="generated/",min_len=50,max_len=100,only_ca=False):
         os.makedirs(folder_path+"/fasta")
     for length in range(min_len,max_len):    
         print(f"Generating 10 sequences of length {length}")
-        for _ in range(10):
+        for sn in range(10):
             traj,res_len = sample_one(length=length)
+            print(f"Generated sequence {sn+1} of length {res_len}")
             fasta_content_i,global_counter = make_pdb(traj, res_len, global_counter,folder_path=folder_path+"/pdb/",only_ca=only_ca)
             fasta_content += fasta_content_i
     fasta_filename = folder_path + "fasta/" + "generated.fasta"
