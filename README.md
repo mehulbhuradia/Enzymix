@@ -119,3 +119,7 @@ ompSubmitted batch job 9940045
 sbatch command executed successfully.
 Submitted batch job 9940046
 sbatch command executed successfully.
+
+
+
+Training tm 9966912 to 9967076

@@ -118,7 +118,7 @@ def build_parser():
         "-n",
         "--num",
         type=int,
-        default=50,
+        default=8,
         help="Number of sequences to generate per structure",
     )
     return parser
