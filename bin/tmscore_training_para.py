@@ -24,6 +24,7 @@ def compute_training_tm_scores(
     train_files,
     outdir: Path,
     nthreads: int = mp.cpu_count(),
+    start: int = 0,
 ):
     logging.info(f"Calculating tm scores with {nthreads} threads...")
     add_tm_scores, add_tm_scores_ref = {}, {}
@@ -38,33 +39,15 @@ def compute_training_tm_scores(
         add_tm_scores_ref[samp_name] = tm_score_ref
     
     # File paths
-    tm_scores_path = outdir / "tm_scores.json"
-    tm_scores_ref_path = outdir / "tm_scores_ref.json"
-
-    # Read or create the JSON file for TM scores
-    if tm_scores_path.exists():
-        with open(tm_scores_path, "r") as file:
-            all_tm_scores = json.load(file)
-    else:
-        all_tm_scores = {}  # Default value if file doesn't exist
-
-    # Read or create the JSON file for TM scores reference
-    if tm_scores_ref_path.exists():
-        with open(tm_scores_ref_path, "r") as file:
-            all_tm_scores_ref = json.load(file)
-    else:
-        all_tm_scores_ref = {}  # Default value if file doesn't exist
-
-    # Update the dictionaries with the new data
-    all_tm_scores.update(add_tm_scores)
-    all_tm_scores_ref.update(add_tm_scores_ref)
+    tm_scores_path = outdir / f'tm_scores_{start}.json'
+    tm_scores_ref_path = outdir / f'tm_scores_ref_{start}.json'
 
     # Rewrite the updated dictionaries back to the JSON files
     with open(tm_scores_path, "w") as sink:
-        json.dump(all_tm_scores, sink, indent=4)
+        json.dump(add_tm_scores, sink, indent=4)
 
     with open(tm_scores_ref_path, "w") as sink:
-        json.dump(all_tm_scores_ref, sink, indent=4)
+        json.dump(add_tm_scores_ref, sink, indent=4)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -114,7 +97,7 @@ def main():
     train_files = glob(os.path.join(args.train_path, "*.pdb"))
     
     # Calculate scores
-    compute_training_tm_scores(generated_pdbs[args.start:args.start+args.chunk], train_files, Path(args.dirname))
+    compute_training_tm_scores(generated_pdbs[args.start:args.start+args.chunk], train_files, Path(args.dirname),start=args.start)
 
 
 if __name__ == "__main__":
