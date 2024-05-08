@@ -1,6 +1,6 @@
 #!/bin/sh
 #SBATCH --partition=general,insy
-#SBATCH --job-name=F_Enzymix
+#SBATCH --job-name=pmpnn
 #SBATCH --qos=medium         
 #SBATCH --time=36:00:00      
 #SBATCH --ntasks=1         
