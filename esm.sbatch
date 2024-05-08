@@ -14,5 +14,6 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
+export HF_HOME=/tmp/mbhuradia/
 
 srun python esm_perp.py --in_fasta generated/fasta/generated.fasta

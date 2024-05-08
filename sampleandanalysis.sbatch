@@ -15,6 +15,7 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
 export HOME=/tmp/mbhuradia/
+export HF_HOME=/tmp/mbhuradia/
 
 rm -rf proteinmpnn_residues
 rm -rf generated
