@@ -28,7 +28,7 @@ BASE_AMINO_ACIDS = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', type=str, default='cuda')
-parser.add_argument('--resume', type=str, default="./logs/8_cont/checkpoints/295.pt")
+parser.add_argument('--resume', type=str, default="./logs/final/checkpoints/final.pt")
 parser.add_argument('--layers', type=int, default=8)
 
 # Task options

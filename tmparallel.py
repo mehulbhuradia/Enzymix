@@ -10,7 +10,7 @@ def run_sbatch(script_path):
         print(f"Error running sbatch command: {e} {command}")
 
 total = 1000
-chunk_size = 4
+chunk_size = 1
 chunks = total // chunk_size
 
 for i in range(0, chunks):
