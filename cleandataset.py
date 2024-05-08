@@ -37,6 +37,7 @@ def clean_pdb_folder(folder_path):
                 results.append(average)
             else:
                 os.remove(pdb_file)
+                print(f"Removed {filename}")
     print(f"Number of files removed: {len(file_list)-len(results)}")
     print(f"Number of files kept: {len(results)}")
     print(f"Average Bfactor of kept files: {np.mean(results)}")
