@@ -2,11 +2,6 @@ import os
 import numpy as np
 from Bio.PDB import PDBParser
 from tqdm import tqdm
-import argparse
-from tqdm import tqdm
-import json
-
-
 
 
 def average_bfactor(pdb_file):
@@ -28,7 +23,6 @@ def average_bfactor(pdb_file):
     else:
         return None,None
 
-import os
 
 def clean_pdb_folder(folder_path):    
     results = []
@@ -39,7 +33,7 @@ def clean_pdb_folder(folder_path):
             pdb_file = os.path.join(folder_path, filename)
             average,siz = average_bfactor(pdb_file)
             pbar.update(1)
-            if siz >=50 and siz <= 100 and average <70:
+            if siz >=50 and siz <= 100 and average < 70:
                 results.append(average)
             else:
                 os.remove(pdb_file)
