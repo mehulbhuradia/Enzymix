@@ -27,7 +27,6 @@ def average_bfactor(pdb_file):
 def clean_pdb_folder(folder_path):    
     results = []
     file_list = [filename for filename in os.listdir(folder_path) if filename.endswith('.pdb')]
-    file_list = file_list[50000:]
     with tqdm(total=len(file_list), desc="Processing files") as pbar:
         for filename in file_list:
             pdb_file = os.path.join(folder_path, filename)
