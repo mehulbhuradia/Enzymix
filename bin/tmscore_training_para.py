@@ -23,7 +23,7 @@ def compute_training_tm_scores(
     pdb_files: Collection[str],
     train_files,
     outdir: Path,
-    nthreads: int = mp.cpu_count(),
+    nthreads: int = os.getenv('SLURM_CPUS_PER_TASK'),
     start: int = 0,
 ):
     logging.info(f"Calculating tm scores with {nthreads} threads...")
