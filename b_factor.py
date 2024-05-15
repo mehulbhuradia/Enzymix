@@ -14,8 +14,7 @@ args = parser.parse_args()
 def average_bfactor(pdb_file):
     parser = PDBParser(QUIET=True)
     structure = parser.get_structure('pdb_structure', pdb_file)
-    
-    bfactor_values = [atom.get_bfactor() for atom in structure.get_atoms() if atom.get_bfactor() is not None]
+    bfactor_values = [atom.get_bfactor() for atom in structure.get_atoms() if ((atom.get_bfactor() is not None)  and (atom.get_name() == 'CA'))]
     if bfactor_values:
         return np.mean(bfactor_values)
     else:
