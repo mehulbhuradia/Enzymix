@@ -26,6 +26,7 @@ def compute_training_tm_scores(
     nthreads: int = os.getenv('SLURM_CPUS_PER_TASK'),
     start: int = 0,
 ):
+    print(type(nthreads))
     logging.info(f"Calculating tm scores with {nthreads} threads...")
     add_tm_scores, add_tm_scores_ref = {}, {}
     for i, fname in tqdm(enumerate(pdb_files), total=len(pdb_files)):
