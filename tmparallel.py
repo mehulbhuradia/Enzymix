@@ -9,7 +9,7 @@ def run_sbatch(script_path):
     except Exception as e:
         print(f"Error running sbatch command: {e} {command}")
 
-total = 1
+total = 500
 chunk_size = 1
 chunks = total // chunk_size
 
