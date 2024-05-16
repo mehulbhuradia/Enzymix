@@ -28,7 +28,7 @@ from foldingdiff.angles_and_coords import get_pdb_length
 
 
 def get_cctm_score(orig_pdb: Path, folded_dirname: Path) -> Tuple[float, str]:
-    """get the self-consistency tm score"""
+    """get the cross-consistency tm score"""
     bname = os.path.splitext(os.path.basename(orig_pdb))[0] + ".pdb"
     folded_pdbs = glob(os.path.join(folded_dirname, bname))
     print(f"Processing {orig_pdb} with {len(folded_pdbs)} structures")
@@ -147,7 +147,7 @@ def main():
     ax.axvline(0.5, color="grey", linestyle="--")
     ax.set(
         xlabel=f"ccTM, $n={passing_num}$ are designable $(\geq 0.5$)",
-        title=f"Self-consistency TM (ccTM) scores, {len(cctm_scores)} generated protein backbones",
+        title=f"Cross-consistency TM (ccTM) scores, {len(cctm_scores)} generated protein backbones",
     )
     fig.savefig(args.outprefix + "_hist.pdf", bbox_inches="tight")
 
@@ -180,7 +180,7 @@ def main():
         f"ccTM scores, {len(cctm_scores)} generated protein backbones", fontsize=14
     )
     ax.set_ylabel("Count", fontsize=12)
-    ax.set_xlabel("Self-consistency TM score (ccTM)", fontsize=12)
+    ax.set_xlabel("Cross-consistency TM score (ccTM)", fontsize=12)
     fig.savefig(args.outprefix + "_hist_by_len.pdf", bbox_inches="tight")
 
     # Create a jointplot of values if we can also find the training TM scores
