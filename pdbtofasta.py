@@ -17,10 +17,24 @@ def pdb_to_seq_str(pdb_file,name):
     for model in structure:
         for chain in model:
             for residue in chain:
-                if PDB.is_aa(residue):
-                    one_letter_code = Polypeptide.three_to_index(residue.get_resname())
-                    one_letter_code = Polypeptide.index_to_one(one_letter_code)
-                    seq += one_letter_code
+                print(residue)
+                # CHECK IF IT WORKS< THERE WAS A BUG IN AMINO ACIDS WHILE ENERTING SO THIS IS ROBABLY CORRECT BUT CHECK BEFORE RUNNING
+                ###################################################
+                #####################################################################################################
+                #####################################################################################################
+                #####################################################################################################
+                #####################################################################################################
+                #####################################################################################################
+                #####################################################################################################
+                #####################################################################################################
+                #####################################################################################################
+                #####################################################################################################
+                ##################################################
+                # if PDB.is_aa(residue):
+                one_letter_code = Polypeptide.three_to_index(residue.get_resname())
+                one_letter_code = Polypeptide.index_to_one(one_letter_code)
+                seq += one_letter_code
+    print(len(seq))
     fasta_seq = split_array(seq, 60)
     fasta_content += f">{name}"
     for fs in fasta_seq:
@@ -39,6 +53,6 @@ for filename in file_list:
     fasta_content_i = pdb_to_seq_str(pdb_file, filename.split(".")[0])
     fasta_content += fasta_content_i
 
-fasta_filename = "generated.fasta"
-with open(fasta_filename, "w") as fasta_file:
-    fasta_file.write(fasta_content)
+# fasta_filename = "generated.fasta"
+# with open(fasta_filename, "w") as fasta_file:
+#     fasta_file.write(fasta_content)
