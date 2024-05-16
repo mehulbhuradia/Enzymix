@@ -1,5 +1,5 @@
 """
-Script for calculating self consistency TM scores
+Script for calculating cross consistency TM scores
 """
 
 import argparse
@@ -27,7 +27,7 @@ from foldingdiff import tmalign
 from foldingdiff.angles_and_coords import get_pdb_length
 
 
-def get_sctm_score(orig_pdb: Path, folded_dirname: Path) -> Tuple[float, str]:
+def get_cctm_score(orig_pdb: Path, folded_dirname: Path) -> Tuple[float, str]:
     """get the self-consistency tm score"""
     bname = os.path.splitext(os.path.basename(orig_pdb))[0] + ".pdb"
     folded_pdbs = glob(os.path.join(folded_dirname, bname))
@@ -60,7 +60,7 @@ def build_parser():
         "-o",
         "--outprefix",
         type=str,
-        default=os.path.join(os.getcwd(), "sctm_scores"),
+        default=os.path.join(os.getcwd(), "cctm_scores"),
         help="Output prefix for files to write",
     )
     return parser
@@ -95,7 +95,7 @@ def main():
         f"Processed {len(orig_predicted_backbones)} structures, {error_count} errors"
     )
     logging.info(
-        f"Computing scTM scores across {len(orig_predicted_backbones)} generated structures"
+        f"Computing ccTM scores across {len(orig_predicted_backbones)} generated structures"
     )
     with mp.Pool(mp.cpu_count()) as pool:
         ss_counts = list(
@@ -107,80 +107,80 @@ def main():
         }
 
     # Match up the files
-    pfunc = functools.partial(get_sctm_score, folded_dirname=Path(args.folded))
+    pfunc = functools.partial(get_cctm_score, folded_dirname=Path(args.folded))
     pool = mp.Pool(mp.cpu_count())
-    sctm_scores_raw_and_ref = list(
+    cctm_scores_raw_and_ref = list(
         pool.map(pfunc, orig_predicted_backbones, chunksize=5)
     )
     pool.close()
     pool.join()
 
-    sctm_non_nan_idx = [
-        i for i, (val, _) in enumerate(sctm_scores_raw_and_ref) if ~np.isnan(val)
+    cctm_non_nan_idx = [
+        i for i, (val, _) in enumerate(cctm_scores_raw_and_ref) if ~np.isnan(val)
     ]
-    sctm_scores_mapping = {
-        orig_predicted_backbone_names[i]: sctm_scores_raw_and_ref[i][0]
-        for i in sctm_non_nan_idx
+    cctm_scores_mapping = {
+        orig_predicted_backbone_names[i]: cctm_scores_raw_and_ref[i][0]
+        for i in cctm_non_nan_idx
     }
-    sctm_scores_reference = {
-        orig_predicted_backbone_names[i]: sctm_scores_raw_and_ref[i][1]
-        for i in sctm_non_nan_idx
+    cctm_scores_reference = {
+        orig_predicted_backbone_names[i]: cctm_scores_raw_and_ref[i][1]
+        for i in cctm_non_nan_idx
     }
 
-    sctm_scores = np.array(list(sctm_scores_mapping.values()))
+    cctm_scores = np.array(list(cctm_scores_mapping.values()))
 
-    passing_num = np.sum(sctm_scores >= 0.5)
+    passing_num = np.sum(cctm_scores >= 0.5)
     logging.info(
-        f"{len(sctm_scores)} entries with scores, {passing_num} passing 0.5 cutoff"
+        f"{len(cctm_scores)} entries with scores, {passing_num} passing 0.5 cutoff"
     )
 
     # Write the output
     logging.info(
-        f"scTM score mean/median: {np.mean(sctm_scores), np.median(sctm_scores)}"
+        f"ccTM score mean/median: {np.mean(cctm_scores), np.median(cctm_scores)}"
     )
     with open(args.outprefix + ".json", "w") as sink:
-        json.dump(sctm_scores_mapping, sink, indent=4)
+        json.dump(cctm_scores_mapping, sink, indent=4)
 
     # Create histogram of values
     fig, ax = plt.subplots()
-    ax.hist(sctm_scores, bins=25, alpha=0.6)
+    ax.hist(cctm_scores, bins=25, alpha=0.6)
     ax.axvline(0.5, color="grey", linestyle="--")
     ax.set(
-        xlabel=f"scTM, $n={passing_num}$ are designable $(\geq 0.5$)",
-        title=f"Self-consistency TM (scTM) scores, {len(sctm_scores)} generated protein backbones",
+        xlabel=f"ccTM, $n={passing_num}$ are designable $(\geq 0.5$)",
+        title=f"Self-consistency TM (ccTM) scores, {len(cctm_scores)} generated protein backbones",
     )
     fig.savefig(args.outprefix + "_hist.pdf", bbox_inches="tight")
 
     # Create histogram of values by length
-    sctm_scores_with_len = pd.DataFrame(
+    cctm_scores_with_len = pd.DataFrame(
         [
-            (sctm_scores_mapping[k], orig_predicted_backbone_lens[k])
-            for k in sctm_scores_mapping.keys()
+            (cctm_scores_mapping[k], orig_predicted_backbone_lens[k])
+            for k in cctm_scores_mapping.keys()
         ],
-        columns=["scTM", "length_int"],
+        columns=["ccTM", "length_int"],
     )
-    sctm_scores_with_len["length"] = [
+    cctm_scores_with_len["length"] = [
         r"short ($\leq 70$ aa)" if l <= 70 else r"long ($> 70$ aa)"
-        for l in sctm_scores_with_len["length_int"]
+        for l in cctm_scores_with_len["length_int"]
     ]
 
     # For each length category report the number that exceed cutoff
-    for length_cat in sctm_scores_with_len["length"].unique():
+    for length_cat in cctm_scores_with_len["length"].unique():
         passing_num = np.sum(
-            (sctm_scores_with_len["scTM"] >= 0.5)
-            & (sctm_scores_with_len["length"] == length_cat)
+            (cctm_scores_with_len["ccTM"] >= 0.5)
+            & (cctm_scores_with_len["length"] == length_cat)
         )
-        denom = np.sum(sctm_scores_with_len["length"] == length_cat)
+        denom = np.sum(cctm_scores_with_len["length"] == length_cat)
         logging.info(f"{length_cat}: {passing_num}/{denom} passing 0.5 cutoff")
 
     fig, ax = plt.subplots(dpi=300)
-    sns.histplot(sctm_scores_with_len, x="scTM", hue="length")
+    sns.histplot(cctm_scores_with_len, x="ccTM", hue="length")
     ax.axvline(0.5, color="grey", linestyle="--", alpha=0.5)
     ax.set_title(
-        f"scTM scores, {len(sctm_scores)} generated protein backbones", fontsize=14
+        f"ccTM scores, {len(cctm_scores)} generated protein backbones", fontsize=14
     )
     ax.set_ylabel("Count", fontsize=12)
-    ax.set_xlabel("Self-consistency TM score (scTM)", fontsize=12)
+    ax.set_xlabel("Self-consistency TM score (ccTM)", fontsize=12)
     fig.savefig(args.outprefix + "_hist_by_len.pdf", bbox_inches="tight")
 
     # Create a jointplot of values if we can also find the training TM scores
@@ -188,7 +188,7 @@ def main():
     if os.path.isfile(training_tm_scores_fname):
         with open(training_tm_scores_fname) as source:
             training_tm_scores = json.load(source)
-        shared_keys = [k for k in sctm_scores_mapping.keys() if k in training_tm_scores]
+        shared_keys = [k for k in cctm_scores_mapping.keys() if k in training_tm_scores]
         logging.info(
             f"Found {len(shared_keys)} overlapped keys with training tm scores at {training_tm_scores_fname}"
         )
@@ -197,23 +197,23 @@ def main():
             [
                 (
                     k,
-                    sctm_scores_mapping[k],
+                    cctm_scores_mapping[k],
                     training_tm_scores[k],
                     orig_predicted_backbone_lens[k],
                     orig_predicted_secondary_structs[k][0],
                     orig_predicted_secondary_structs[k][1],
-                    sctm_scores_reference[k],
+                    cctm_scores_reference[k],
                 )
                 for k in shared_keys
             ],
             columns=[
                 "id",
-                "scTM",
+                "ccTM",
                 "max training TM",
                 "length_int",
                 "alpha_counts",
                 "beta_counts",
-                "scTM best match",
+                "ccTM best match",
             ],
         )
 
@@ -232,13 +232,13 @@ def main():
             r"short ($\leq 70$ aa)" if l <= 70 else r"long ($> 70$ aa)"
             for l in scores_df["length_int"]
         ]
-        scores_df["designable"] = scores_df["scTM"] >= 0.5
+        scores_df["designable"] = scores_df["ccTM"] >= 0.5
 
         for l_cat in scores_df["length"].unique():
             subset = scores_df.loc[scores_df["length"] == l_cat]
-            sctm_prop = np.mean(subset["scTM"] >= 0.5)
+            cctm_prop = np.mean(subset["ccTM"] >= 0.5)
             logging.info(
-                f"For {l_cat}, {np.sum(subset['scTM'] >= 0.5)}/{len(subset)}={sctm_prop:.4f} pass 0.5 cutoff"
+                f"For {l_cat}, {np.sum(subset['ccTM'] >= 0.5)}/{len(subset)}={cctm_prop:.4f} pass 0.5 cutoff"
             )
             designable = subset.loc[subset["designable"]]
             beta_prop = np.mean(designable["beta_counts"] > 0)
@@ -257,16 +257,16 @@ def main():
         scores_df.to_csv(args.outprefix + "_tm_scores.csv")
 
         r, p = stats.spearmanr(
-            scores_df["max training TM"], scores_df["scTM"], alternative="two-sided"
+            scores_df["max training TM"], scores_df["ccTM"], alternative="two-sided"
         )
         logging.info(
-            f"Spearman's correlation between training TM and scTM: {r:.4g} {p:.4g}"
+            f"Spearman's correlation between training TM and ccTM: {r:.4g} {p:.4g}"
         )
 
         # Default figure size is 6.4x4.8
         fig, ax = plt.subplots()
         sns.scatterplot(
-            scores_df, x="max training TM", y="scTM", hue="length", alpha=0.5, ax=ax
+            scores_df, x="max training TM", y="ccTM", hue="length", alpha=0.5, ax=ax
         )
         ax.axvline(0.5, color="grey", alpha=0.5, linestyle="--")
         ax.axhline(0.5, color="grey", alpha=0.5, linestyle="--")
@@ -274,9 +274,9 @@ def main():
         #     ax.axvline(0.5, color="grey", alpha=0.5, linestyle="--")
         # for ax in (jointgrid.ax_joint, jointgrid.ax_marg_y):
         #     ax.axhline(0.5, color="grey", alpha=0.5, linestyle="--")
-        ax.set_title("scTM vs. training similarity", fontsize=14)
+        ax.set_title("ccTM vs. training similarity", fontsize=14)
         ax.set_xlabel("Maximum training TM score", fontsize=12)
-        ax.set_ylabel("scTM score", fontsize=12)
+        ax.set_ylabel("ccTM score", fontsize=12)
         fig.savefig(args.outprefix + "_training_tm_scatter.pdf", bbox_inches="tight")
 
 
