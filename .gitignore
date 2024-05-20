@@ -30,3 +30,4 @@ gen_images/
 cath/
 cath_test/
 cath_train/
+proteinmpnn_residues/

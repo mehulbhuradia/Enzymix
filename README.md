@@ -122,4 +122,15 @@ sbatch command executed successfully.
 
 
 
-Training tm 9966912 to 9967076
+10059660
+
+
+10061081 insy,gene analysis mbhuradi PD       0:00      1 (Priority)
+          10061080 insy,gene analysis mbhuradi PD       0:00      1 (Priority)
+          10061079 insy,gene analysis mbhuradi PD       0:00      1 (Priority)
+          10061078 insy,gene analysis mbhuradi PD       0:00      1 (Priority)
+          10061082 insy,gene analysis mbhuradi PD       0:00      1 (Priority
+
+Analysis 2: 5.515951790892609 , 64.46
+Analysis 2 is final for 
+
