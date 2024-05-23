@@ -2,9 +2,10 @@
 
 import sys
 import os
+import numpy as np
 
 from pyfaidx import Fasta
-sequences = Fasta("generated/fasta/generated.fasta")
+sequences = Fasta("generated_final/fasta/generated.fasta")
 seq_ids = list(sequences.keys())
 seqs={}
 for seq in sequences:
@@ -23,30 +24,27 @@ for file in fasta_files:
                 seqs[id].append(seq[:].seq)
             
 average_percent = 0
+percent_list = []
 percent_dist = {}
 for id, s_list in seqs.items():
     og = s_list[0]
-    all_percent = []
-    for i in range(1,len(s_list)):
-        total = 0
-        correct = 0
-        print(id)
-        print(len(s_list))
-        print(len(og), len(s_list[i]))
-        print(s_list)
-        for j in range(len(s_list[i])):
-            if og[j] == s_list[i][j]:
-                correct += 1
-            total += 1
-        percent = correct/total*100
-        all_percent.append(percent)
-    max_percent = max(all_percent)
-    average_percent += max_percent
-    # print(f"{id}: {max_percent}")
-    percent_dist[id] = max_percent
+    total = 0
+    correct = 0
+    for j in range(len(s_list[1])):
+        if og[j] == s_list[1][j]:
+            correct += 1
+        total += 1
+    percent = correct/total*100
+    print(f"{id}: {percent}")
+    average_percent += percent
+    percent_dist[id] = percent
+    percent_list.append(percent)
 
-average_percent = average_percent/len(seqs)
+average_percent = np.mean(percent_list)
+std_percent = np.std(percent_list)
 print(f"Average: {average_percent}")
+print(f"Standard deviation: {std_percent}")
+
 
 # Save dict to json
 with open("percent_dist.json", "w") as f:

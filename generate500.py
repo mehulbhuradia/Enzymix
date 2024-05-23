@@ -92,7 +92,10 @@ def sample_one(length):
     model.eval()
     batch_size = 1
     batch_size = torch.tensor([batch_size]).to(args.device)
-    coords = torch.rand(1, length, 9).to(args.device)
+    if args.only_ca:
+        coords = torch.rand(1, length, 3).to(args.device)
+    else:
+        coords = torch.rand(1, length, 9).to(args.device)
     one_hot = torch.rand(1, length, 20).to(args.device)
     edges,_ = get_edges_batch(int(length/2), batch_size)
     edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
