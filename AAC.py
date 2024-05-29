@@ -49,3 +49,34 @@ print(f"Standard deviation: {std_percent}")
 # Save dict to json
 with open("percent_dist.json", "w") as f:
     f.write(str(percent_dist))
+
+# Histogram of percent_list
+import matplotlib.pyplot as plt
+plt.hist(percent_list, bins=10)
+plt.xlabel('Amino Acid Concistency (%)')
+plt.ylabel("Frequency")
+plt.title('AAC of the generated protiens')
+plt.savefig('./saved_plots/AAC_hist.png')
+plt.show()
+
+import json
+with open('cctm_scores.json', 'r') as f:
+    tm_dict = json.load(f)
+
+tm_scores_list = list(tm_dict.values())
+tm_scores_list = [float(i) for i in tm_scores_list]
+tm_scores_list.sort(key = float)
+
+# Make a scatter plot of values from tm_dict and percent_dist
+# Match the values by the keys
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = []
+y = []
+for key in tm_dict.keys():
+    if key in percent_dist.keys():
+        x.append(tm_dict[key])
+        y.append(percent_dist[key])
+
+

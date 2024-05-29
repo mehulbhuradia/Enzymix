@@ -31,3 +31,6 @@ cath/
 cath_test/
 cath_train/
 proteinmpnn_residues/
+generated_final/
+final_results/
+saved_plots/
