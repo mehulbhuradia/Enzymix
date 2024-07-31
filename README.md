@@ -1,136 +1,60 @@
-# Enzymix
-#file transfer
-scp -r processed_500 daic:~/Enzymix/
+# [Protein Structure and Sequence Co-Design through Graph Based Generative Diffusion Modeling](https://repository.tudelft.nl/record/uuid:08ddfafd-1eac-4e53-b0fc-837ad39cb6df)
+
+This project implements a graph-based generative diffusion model for the co-design of protein structures and sequences. It was developed as a master's thesis at TU Delft.
+
+![Project Demo](visualisation/output.gif)
+
+## Abstract
+
+Proteins are fundamental biological macromolecules essential for cellular structure, enzymatic catalysis, and immune defense, making the generation of novel proteins crucial for advancements in medicine, biotechnology, and material sciences. This study explores protein design using deep generative models, specifically Denoising Diffusion Probabilistic Models (DDPMs). While traditional methods often focus on either protein structure or sequence design independently, recent trends emphasize a co-design approach addressing both aspects simultaneously. We propose a novel methodology utilizing Equivariant Graph Neural Networks (EGNNs) within the diffusion framework to co-design protein structures and sequences. We modify the EGNN architecture to improve its effectiveness in learning intricate data patterns. Experimental results show that our approach effectively generates high-quality protein sequences, although challenges remain in producing plausible protein backbones and ensuring strong sequence-structure correlation.
+
+## Installation
+
+### Prerequisites
+
+## Usage
+
+### Example
+
+### Arguments
+
+## Project Structure
+
+## Features
+
+- Data preprocessing (handling missing values, normalization, etc.)
+- Model training and evaluation
+- Saving and loading trained models
+- Generating protein structures and sequences
 
 
-<!-- diffab data -->
-scp -r all_structures daic:/tudelft.net/staff-umbrella/Enzymix/diffab/data/
+## Contributing
+
+Contributions are welcome! To contribute:
+
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature-branch`).
+3. Commit your changes (`git commit -am 'Add new feature'`).
+4. Push to the branch (`git push origin feature-branch`).
+5. Create a new Pull Request.
 
 
-#setup
-module use /opt/insy/modulefiles
-module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
+## License
 
-conda create -n Enzymix
-
-conda create --prefix ./thesis
-
-conda activate Enzymix
-
-conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
-
-cd /tudelft.net/staff-umbrella/Enzymix/Enzymix/
-
-<!-- download log files -->
-scp -r daic:/tudelft.net/staff-umbrella/Enzymix/Enzymix/logs/ ./
-
-# tensorboard --logdir D:\Thesis\Enzymix\logs\
-
-<!-- cuz limited space -->
-conda config --add pkgs_dirs /tmp/
-
-<!-- all the required packages -->
-<!-- doesnt work in project dir  but conda install works-->
-pip3 install tqdm easydict tensorboard torch_geometric --no-cache-dir
-
-conda install -c anaconda tqdm
-conda install -c conda-forge easydict
-conda install -c conda-forge tensorboard
-conda install pyg -c pyg
-conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
-conda install packaging
-pip install graphein --user
-
-conda config --add channels defaults
-conda config --add channels bioconda
-conda config --add channels conda-forge
-conda config --set channel_priority strict
-
-conda install bioconda::tmalign
-conda install seaborn
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 
+## Authors
 
-sbatch script.sbatch name layers addlayers
-
-eg:
-
-sbatch script.sbatch bigacomplex 2 4
+- **M.H. Bhuradia** - *Master's thesis* - [TU Delft](https://www.tudelft.nl/)
 
 
-squeue -u mbhuradia
+## Contributors
 
-squeue -u mbhuradia -t RUNNING -h | wc -l
+- **J.M. Weber** - Pattern Recognition and Bioinformatics - EEMCS (mentor)
+- **H. Jamali-Rad** - Pattern Recognition and Bioinformatics - EEMCS (mentor)
+- **A.O. Villegas Morcillo** - Pattern Recognition and Bioinformatics - EEMCS (mentor)
+- **M.J.T. Reinders** - Pattern Recognition and Bioinformatics - EEMCS (graduation committee member)
+- **J.W. Böhmer** - Sequential Decision Making - EEMCS (graduation committee member)
 
-14 x 4 =206078 egcl layers ran out of memory
-
-8 x 8 = 188888 ran out
-
-RuntimeError: DataLoader worker (pid 191071) is killed by signal: Killed.
-slurmstepd: error: Detected 1 oom-kill event(s) in StepId=9209586.0. Some of your processes may have been killed by the cgroup out-$
-srun: error: influ2: task 0: Out Of Memory
-srun: launch/slurm: _step_signal: Terminating StepId=9209586.0
-slurmstepd: error: Detected 1 oom-kill event(s) in StepId=9209586.batch. Some of your processes may have been killed by the cgroup $
-
-
-# print("pout",p_pred[0,0])
-        # print("pin",p_noisy[0,0])
-        #  todo figure out hy its the same?
-didnt work cuz x was being changed
-
-
-
-Increasing lr to 2, 4 and 8 is always bad regardless of change in batch size
-using a large number(16) of layers causes nans
-Init weight made the loss explode for 8 layers, should i try weight decay?
-Initw was just bad,
-normalize improved on seq slightly but very very slightly made pos worse, i will go with normalize true
-Tanh was just bad for seq so no tanh
-Attention was good, so attention true
-Additional layers 0
-layers 8 
-nodefeatures 1024
-no residual was good
-
-
-protienmpnn takes like 10 seconds per pdb
-
--bash-4.2$ sbatch sampleandanalysis.sbatch
-Submitted batch job 9897824
-
-
-small sample 9899385,9899387 
-
-
-sample1k final 9926948
-only omsctm 9928310 om failed
-sctm on 7k 9928683
-sctm len error
-
-sctm 9928693
-
-
-
-
-
-9928845 traintm
-
-ompSubmitted batch job 9940045
-sbatch command executed successfully.
-Submitted batch job 9940046
-sbatch command executed successfully.
-
-
-
-10059660
-
-
-10061081 insy,gene analysis mbhuradi PD       0:00      1 (Priority)
-          10061080 insy,gene analysis mbhuradi PD       0:00      1 (Priority)
-          10061079 insy,gene analysis mbhuradi PD       0:00      1 (Priority)
-          10061078 insy,gene analysis mbhuradi PD       0:00      1 (Priority)
-          10061082 insy,gene analysis mbhuradi PD       0:00      1 (Priority
-
-Analysis 2: 5.515951790892609 , 64.46
-Analysis 2 is final for 
 

@@ -10,10 +10,11 @@ from typing import *
 from tqdm.auto import tqdm
 
 
-
-
+# Replace this with the path to the ProteinMPNN script
 PROTEINMPNN_SCRIPT = os.path.expanduser("/tudelft.net/staff-umbrella/DIMA/ProteinMPNN/protein_mpnn_run.py")
-assert os.path.isfile(PROTEINMPNN_SCRIPT), f"Expected {PROTEINMPNN_SCRIPT} to exist"
+
+
+assert os.path.isfile(PROTEINMPNN_SCRIPT), f"Expected {PROTEINMPNN_SCRIPT} to exist. Follow the instructions in the README to download the ProteinMPNN repository and update script path."
 
 
 def write_fasta(fname: str, seq: str, seqname: str = "sampled") -> str:
