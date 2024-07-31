@@ -1,6 +1,0 @@
-pip install tqdm easydict tensorboard torch_geometric graphein
-
-# linux
-# pip install torch torchvision torchaudio
-# windows
-# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121

@@ -16,231 +16,166 @@ import csv
 from diffab.utils.misc import *
 from diffab.utils.data import *
 from diffab.utils.train import *
-from dpm import FullDPM
-from af_db import ProtienStructuresDataset
-from makepdb import create_pdb_file
+from model.dpm import FullDPM
+from data.af_db_batched import ProtienStructuresDataset, split_array
+from visualisation.makepdb import create_pdb_file
 
-amino_acids=["ALA",
-    "CYS",
-    "ASP",
-    "GLU",
-    "PHE",
-    "GLY",
-    "HIS",
-    "ILE",
-    "LYS",
-    "LEU",
-    "MET",
-    "ASN",
-    "PYL",
-    "PRO",
-    "GLN",
-    "ARG",
-    "SER",
-    "THR",
-    "SEC",
-    "VAL",
-    "TRP",
-    "TYR",
-    "UNK"
-]
+amino_acids = ["ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE", "LYS", "LEU", "MET", "ASN", "PRO", "GLN", "ARG", "SER", "THR", "VAL", "TRP", "TYR"]
+
+BASE_AMINO_ACIDS = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y']
 
 
-def plotter(t100, t0, coords):
 
-    array1 = t100.detach().to("cpu").squeeze(0).t().numpy()
-    array2 = t0.detach().to("cpu").squeeze(0).t().numpy()
-    array3 = coords.detach().to("cpu").squeeze(0).t().numpy()
+parser = argparse.ArgumentParser()
+parser.add_argument('--device', type=str, default='cuda')
+parser.add_argument('--resume', type=str, default="./logs/8_cont/checkpoints/295.pt")
+parser.add_argument('--layers', type=int, default=8)
 
-    # Create subplots
-    fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
+# Task options
+parser.add_argument('--only_ca', action='store_true', default=False)
+parser.add_argument('--num_steps', type=int, default=1000)
 
-    # Plot each line in a subplot
-    # g_CA_coords
-    axs[0][0].plot(array1[0], color='r', label='100')
-    axs[0][0].plot(array2[0], color='b', label='0')
-    axs[0][0].plot(array3[0], color='g', label='true')
-    # Add legend
-    axs[0][0].legend()
-    axs[0][0].set_title('C-a x')
-    # g_CA_coords
-    axs[1][0].plot(array1[1], color='r', label='100')
-    axs[1][0].plot(array2[1], color='b', label='0')
-    axs[1][0].plot(array3[1], color='g', label='true')
-    # Add legend
-    axs[1][0].legend()
-    axs[1][0].set_title('C-a y')
-    # g_CA_coords
-    axs[0][1].plot(array1[2], color='r', label='100')
-    axs[0][1].plot(array2[2], color='b', label='0')
-    axs[0][1].plot(array3[2], color='g', label='true')
-    # Add legend
-    axs[0][1].legend()
-    axs[0][1].set_title('C-a z')
-    
-    # Show the plot
-    plt.show()
+# Configurations
+parser.add_argument('--batch_size', type=int, default=2)
+parser.add_argument('--max_len', type=int, default=100)
+parser.add_argument('--min_len', type=int, default=50)
+parser.add_argument('--path', type=str, default='/tudelft.net/staff-umbrella/DIMA/swiss_p')
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default="train.yml")
-    parser.add_argument('--logdir', type=str, default='./logs')
-    parser.add_argument('--debug', action='store_true', default=False)
-    parser.add_argument('--device', type=str, default='cuda')
-    parser.add_argument('--num_workers', type=int, default=8)
-    parser.add_argument('--tag', type=str, default='')
+# Args only for sampling
+parser.add_argument('--num_samples', type=int, default=10000)
+parser.add_argument('--output', type=str, default='generated/')
 
-    parser.add_argument('--name', type=str, default="")
-    parser.add_argument('--layers', type=int, default=40)
-    parser.add_argument('--add_layers', type=int, default=0)
-    parser.add_argument('--uni', type=str, default=None)
+args = parser.parse_args()
 
+# log_dir = "./logs/train_2024_04_05__04_00_52baseline_layers_4_add_layers_0_node_features_1024/"
+# checkpoint = "120.pt"
 
-    args = parser.parse_args()
+# Load configs
+config, config_name = load_config('train.yml')
+seed_all(config.train.seed)
+# Update config based on args
+config.train.batch_size = args.batch_size
+config.train.max_len = args.max_len
+config.train.min_len = args.min_len
+config.train.path = args.path
+# args.resume=log_dir + 'checkpoints/' + checkpoint
 
-    # Load configs
-    config, config_name = load_config(args.config)
-    seed_all(config.train.seed)
+# Check if the model uses all atoms or only CA atoms
+if args.only_ca:
+    x_dim = 3
+    print('Using only CA atoms')
+else:
+    x_dim = 9
+    print('Using all 3 atoms')
 
-    args.resume="D:/Thesis/Enzymix/logs/train_2024_02_23__08_40_33t1k_layers_40_add_layers_0/checkpoints/45.pt"
-    # Logging
-    if args.debug:
-        writer = BlackHole()
-    else:
-        if args.resume:
-            log_dir = os.path.dirname(os.path.dirname(args.resume))
-        else:
-            log_dir = get_new_log_dir(args.logdir, prefix=config_name, tag=args.tag) + args.name +'_layers_'+str(args.layers)+'_add_layers_'+str(args.add_layers)
-        ckpt_dir = os.path.join(log_dir, 'checkpoints')
-        if not os.path.exists(ckpt_dir): os.makedirs(ckpt_dir)
-        tensorboard_trace_handler = torch.profiler.tensorboard_trace_handler(log_dir)
-        if not os.path.exists(os.path.join(log_dir, os.path.basename(args.config))):
-            shutil.copyfile(args.config, os.path.join(log_dir, os.path.basename(args.config)))
-    print(args)
-    print(config)
+# Data
+print('Loading dataset...')
+dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len, min_len=config.train.min_len,batch_size=config.train.batch_size,only_ca=args.only_ca)
+print("Dataset size: ", dataset.size())
+print('Samples %d' % (len(dataset)))
 
-    # Data
-    print('Loading dataset...')
-    dataset = ProtienStructuresDataset(path=config.train.path, max_len=config.train.max_len)
-    d_loader = DataLoader(
-        dataset, 
-        batch_size=1,  
-        shuffle=False,
-        num_workers=args.num_workers
-    )
-    print('Samples %d' % (len(dataset)))
+# Check if CUDA (GPU support) is available
+if torch.cuda.is_available():
+    num_gpus = torch.cuda.device_count()
+    print(f"GPU is available with {num_gpus} {'GPU' if num_gpus == 1 else 'GPUs'}")
+else:
+    print("No GPU available, using CPU.")
 
-    # Check if CUDA (GPU support) is available
-    if torch.cuda.is_available():
-        # Get the number of available GPUs
-        num_gpus = torch.cuda.device_count()
-        print(f"GPU is available with {num_gpus} {'GPU' if num_gpus == 1 else 'GPUs'}")
-    else:
-        print("No GPU available, using CPU.")
+# Model
+print('Building model...')
+model = FullDPM(n_layers=args.layers,
+                additional_layers=0,
+                hidden_nf=1024,
+                x_dim=x_dim,
+                attention=True,
+                normalize=True,
+                residual=False,
+                coords_agg='mean', # sum causes NaNs
+                tanh=False,
+                num_steps=args.num_steps
+                    ).to(args.device)
 
-    # Model
-    print('Building model...')
-    model = FullDPM(n_layers=args.layers,additional_layers=args.add_layers).to(args.device)
-
-    # Resume
-    ckpt_path = args.resume
-    ckpt = torch.load(ckpt_path, map_location=args.device)
-    model.load_state_dict(ckpt['model'])
+# Resume
+ckpt_path = args.resume
+ckpt = torch.load(ckpt_path, map_location=args.device)
+model.load_state_dict(ckpt['model'])
 
 
-def sample_one(uniprotid):
+def sample_one(idx):
     model.eval()
-    print(f"Sampling from {uniprotid}")
-    coords, one_hot, edges, path = dataset.get_item_by_uniprotid(uniprotid)
+    print(f"Sampling from {idx}")
+    coords, one_hot, edges, batch_size = dataset[idx]
+    res_len = coords.shape[0]//batch_size
     coords=coords.unsqueeze(0).to(args.device)
     one_hot=one_hot.unsqueeze(0).to(args.device)
     edges=[edge.unsqueeze(0).to(args.device) for edge in edges]
-
-    traj = model.sample(coords, one_hot, edges, pbar=True, sample_structure=True, sample_sequence=True)
-    return traj,coords,model.trans_seq._sample(one_hot).squeeze(0)
-
-
-
-def make_pdb(traj,count,num=None):
-    sequence_0=traj[num][1].squeeze(0)
-    position_0=traj[num][0]
-    # plotter(position_100, position_0, coords)
-    position_0 = position_0.detach().to("cpu").squeeze(0).numpy()
-
-    sequence_0_name = []
-    for i in sequence_0.tolist():
-        sequence_0_name.append(amino_acids[i])
-
-    residues_0=[]
-    for i in range(len(sequence_0_name)):
-        temp = {}
-        temp['name'] = sequence_0_name[i]
-        temp['CA'] = position_0[i][:3].tolist()
-        temp['CB'] = position_0[i][3:6].tolist()
-        temp['CN'] = position_0[i][6:].tolist()
-        residues_0.append(temp)
-    create_pdb_file(residues_0, "traj/"+str(num)+".pdb")
-    
+    batch_size = torch.tensor([batch_size]).to(args.device)
+    traj = model.sample(coords, one_hot, edges,batch_size, pbar=True, sample_structure=True, sample_sequence=True)
+    return traj,res_len
 
 
-# count = 0
-# for i in dataset.paths:
-#     if "150" in i.split("_")[-1]:
-#         count+=1
-#         try:
-#             traj,coords,s_true = sample_one(i)
-#             make_pdb(traj,count)
-#             sequence_true_name = []
-#             for i in s_true.tolist():
-#                 sequence_true_name.append(amino_acids[i])
-#             residues_true=[]
-#             coords = coords.detach().to("cpu").squeeze(0).numpy()
-#             for i in range(len(sequence_true_name)):
-#                 temp = {}
-#                 temp['name'] = sequence_true_name[i]
-#                 temp['CA'] = coords[i][:3].tolist()
-#                 temp['CB'] = coords[i][3:6].tolist()
-#                 temp['CN'] = coords[i][6:].tolist()
-#                 residues_true.append(temp)
-#             create_pdb_file(residues_true, "gen/"+str(count)+"_true.pdb")
-#         except:
-#             continue
-   
-count = 0
-for i in dataset.paths:
-    if "50" in i.split("_")[-1]:
-        count+=1
-        try:
-            traj,coords,s_true = sample_one(i)
-            for i in range(100):
-                make_pdb(traj,count,i)
+def make_pdb(traj, res_len, global_counter,folder_path="generated/pdb",num=0):
+    sequences=traj[num][1].squeeze(0)
+    sequence_list = split_array(sequences, res_len)
+    positions=traj[num][0].detach().to("cpu").squeeze(0).numpy()
+    positions_list = split_array(positions, res_len)
+
+    # Make PDB file and fasta sequences
+    fasta_content = ""
+    for i in range(len(sequence_list)):
+        sequence_name = []
+        sequence_fasta = ""
+        for j in sequence_list[i].tolist():
+            sequence_name.append(amino_acids[j])
+            sequence_fasta+=BASE_AMINO_ACIDS[j]
+        residues=[]
+        for j in range(len(sequence_name)):
+            temp = {}
+            temp['name'] = sequence_name[j]
+            temp['CA'] = positions_list[i][j][:3].tolist()
+            temp['C'] = positions_list[i][j][3:6].tolist()
+            temp['N'] = positions_list[i][j][6:].tolist()
+            residues.append(temp)
+        create_pdb_file(residues, folder_path+str(global_counter)+"_"+str(num)+".pdb")
+        sequence_id = str(global_counter)+"_"+str(num)
+        fasta_seq = split_array(sequence_fasta, 60)
+        fasta_content += f">{sequence_id}"
+        for fs in fasta_seq:
+            fasta_content += f"\n{''.join(fs)}"
+        fasta_content += "\n"
+        global_counter+=1
+
+    return fasta_content, global_counter
+
+
+def generate(count,folder_path="generated/",random_sampling=True):
+    print(random_sampling)
+    if count > dataset.size():
+        count = dataset.size()
+    global_counter = 0
+    fasta_content = ""
+    # Create folder for generated PDB files
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    if not os.path.exists(folder_path+"/pdb"):
+        os.makedirs(folder_path+"/pdb")
+    if not os.path.exists(folder_path+"/fasta"):
+        os.makedirs(folder_path+"/fasta")
+    for i in range(count):
+        if random_sampling:
+            idx = np.random.randint(0,len(dataset))
+        else:
+            idx = i
+        traj,res_len = sample_one(idx)
+        fasta_content_i,global_counter = make_pdb(traj, res_len, global_counter,folder_path=folder_path+"/pdb/")
+        fasta_content += fasta_content_i
+        if global_counter >= count:
             break
-        except:
-            continue
+    fasta_filename = folder_path + "fasta/" + "generated.fasta"
+    with open(fasta_filename, "w") as fasta_file:
+        fasta_file.write(fasta_content)
 
 
-# for i in range(20):
-#     traj,coords,s_true = sample_one(dataset.paths[19])
-#     make_pdb(traj,i)
+generate(args.num_samples,args.output,random_sampling=args.num_samples<dataset.size())
 
-sequence_true_name = []
-for i in s_true.tolist():
-    sequence_true_name.append(amino_acids[i])
-
-residues_true=[]
-coords = coords.detach().to("cpu").squeeze(0).numpy()
-for i in range(len(sequence_true_name)):
-    temp = {}
-    temp['name'] = sequence_true_name[i]
-    temp['CA'] = coords[i][:3].tolist()
-    temp['CB'] = coords[i][3:6].tolist()
-    temp['CN'] = coords[i][6:].tolist()
-    residues_true.append(temp)
-
-create_pdb_file(residues_true, "true.pdb")
-
-
-# from vispdb import visualize_ribbon_pdb
-
-# # visualize_ribbon_pdb('0.pdb')
-# visualize_ribbon_pdb('true.pdb')
+# Takes max 2 minutes per sequence

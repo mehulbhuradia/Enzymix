@@ -39,7 +39,15 @@ conda install -c conda-forge tensorboard
 conda install pyg -c pyg
 conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 conda install packaging
+pip install graphein --user
 
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+conda config --set channel_priority strict
+
+conda install bioconda::tmalign
+conda install seaborn
 
 
 
@@ -69,3 +77,60 @@ slurmstepd: error: Detected 1 oom-kill event(s) in StepId=9209586.batch. Some of
         # print("pin",p_noisy[0,0])
         #  todo figure out hy its the same?
 didnt work cuz x was being changed
+
+
+
+Increasing lr to 2, 4 and 8 is always bad regardless of change in batch size
+using a large number(16) of layers causes nans
+Init weight made the loss explode for 8 layers, should i try weight decay?
+Initw was just bad,
+normalize improved on seq slightly but very very slightly made pos worse, i will go with normalize true
+Tanh was just bad for seq so no tanh
+Attention was good, so attention true
+Additional layers 0
+layers 8 
+nodefeatures 1024
+no residual was good
+
+
+protienmpnn takes like 10 seconds per pdb
+
+-bash-4.2$ sbatch sampleandanalysis.sbatch
+Submitted batch job 9897824
+
+
+small sample 9899385,9899387 
+
+
+sample1k final 9926948
+only omsctm 9928310 om failed
+sctm on 7k 9928683
+sctm len error
+
+sctm 9928693
+
+
+
+
+
+9928845 traintm
+
+ompSubmitted batch job 9940045
+sbatch command executed successfully.
+Submitted batch job 9940046
+sbatch command executed successfully.
+
+
+
+10059660
+
+
+10061081 insy,gene analysis mbhuradi PD       0:00      1 (Priority)
+          10061080 insy,gene analysis mbhuradi PD       0:00      1 (Priority)
+          10061079 insy,gene analysis mbhuradi PD       0:00      1 (Priority)
+          10061078 insy,gene analysis mbhuradi PD       0:00      1 (Priority)
+          10061082 insy,gene analysis mbhuradi PD       0:00      1 (Priority
+
+Analysis 2: 5.515951790892609 , 64.46
+Analysis 2 is final for 
+
