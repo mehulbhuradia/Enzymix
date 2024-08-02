@@ -67,6 +67,8 @@ def run_omegafold(input_fasta: str, outdir: str, gpu: int, weights: str = "",sta
         f"Running omegafold on {input_fasta} > {outdir} with gpu {gpu} with weights {weights}"
     )
     assert shutil.which("omegafold")
+
+    # Replace the path to the omegafold script with the correct path
     cmd = f"CUDA_VISIBLE_DEVICES={gpu} python /tudelft.net/staff-umbrella/DIMA/OmegaFold/main.py {input_fasta} {outdir} --device cuda:0"
     if weights:
         assert os.path.isfile(weights)

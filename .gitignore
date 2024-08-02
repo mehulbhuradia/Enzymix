@@ -34,3 +34,5 @@ proteinmpnn_residues/
 generated_final/
 final_results/
 saved_plots/
+swissprot_pdb_v4/
+swissprot_pdb_v4_processed/

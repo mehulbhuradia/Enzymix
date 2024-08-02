@@ -10,23 +10,137 @@ Proteins are fundamental biological macromolecules essential for cellular struct
 
 ## Installation
 
-### Prerequisites
+### Requirements
+
+- Python 3.10
+- PyTorch with CUDA 12.1
+- PyTorch Geometric
+- tqdm
+- easydict
+- tensorboard
+- graphein
+- bioconda::tmalign
+- seaborn
+- [Omegafold](https://github.com/HeliXonProtein/OmegaFold)
+- [ProtienMPNN](https://github.com/dauparas/ProteinMPNN)
+
+### Setup Instructions for [DAIC](https://daic.tudelft.nl/)
+
+Change to the project directory:
+```bash
+cd path/to/your/project
+```
+Clone the repository:
+```bash
+git clone https://github.com/mehulbhuradia/Enzymix.git
+cd Enzymix
+```
+Load the required modules:
+```bash
+module use /opt/insy/modulefiles
+module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
+```
+
+Create and activate a new conda environment:
+```bash
+conda create --prefix ./thesis
+conda activate ./thesis
+```
+
+Due to limited space, we need to change the conda cache directory to /tmp/:
+```bash
+conda config --add pkgs_dirs /tmp/
+```
+
+Install the required packages
+```bash
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+conda config --set channel_priority strict
+conda install bioconda::tmalign
+conda install -c anaconda tqdm
+conda install -c conda-forge easydict
+conda install -c conda-forge tensorboard
+conda install pyg -c pyg
+conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+conda install packaging
+conda install seaborn
+pip install graphein --user
+```
+
+Download Omegafold and ProteinMPNN:
+
+Clone the repositories and follow the instructions in the respective READMEs to set them up.
+```bash
+cd ..
+git clone https://github.com/dauparas/ProteinMPNN.git
+git clone https://github.com/HeliXonProtein/OmegaFold.git
+cd Enzymix
+```
+
+Update the paths in `bin/omegafold_across_gpus.py` and `bin/pdb_to_residue_protienmpnn.py` to the correct paths of the Omegafold and ProteinMPNN repositories.
+
+For `omegafold_across_gpus.py`. Replace:
+```python
+cmd = f"CUDA_VISIBLE_DEVICES={gpu} python /tudelft.net/staff-umbrella/DIMA/OmegaFold/main.py {input_fasta} {outdir} --device cuda:0"
+```
+with your OmegaFold main.py path:
+```python
+cmd = f"CUDA_VISIBLE_DEVICES={gpu} python path/to/your/project/OmegaFold/main.py {input_fasta} {outdir} --device cuda:0"
+```
+For `bin/pdb_to_residue_protienmpnn.py`. Replace:
+```python
+PROTEINMPNN_SCRIPT = os.path.expanduser("/tudelft.net/staff-umbrella/DIMA/ProteinMPNN/protein_mpnn_run.py")
+```
+with your ProteinMPNN protein_mpnn_run.py path:
+```python
+PROTEINMPNN_SCRIPT = os.path.expanduser("path/to/your/project/ProteinMPNN/protein_mpnn_run.py")
+```
 
 ## Usage
 
-### Example
+### Downloading Data
+Download the `.pdb` files from AlphaFoldDB:
+[Swiss-Prot pdbs](https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/swissprot_pdb_v4.tar)
 
-### Arguments
+Unzip the files to a folder called `swissprot_pdb_v4`. `swissprot_pdb_v4` should be in the same directory as the project.
+
+`swissprot_pdb_v4` should contain .gz files, unzip these files.
+
+`swissprot_pdb_v4` should contain directories with the `.pdb` files. Delete any files that are not `.pdb` files.
+
+### Filtering Data
+
+We filter the data to remove any proteins that are not suitable for our model. We filter the data based on the following criteria:
+Average AlphaFold Confidence Score > 70, Sequence Length > 50, and Sequence Length < 100.
+
+Run the `filter_data.ipynb` notebook to filter the data, and remove any proteins that do not meet the criteria.
+
+### Preprocessing Data
+
+Run the `preprocess_data.py` file to preprocess the data. This will generate json files containing tensors of the protein structures and sequences, which will be used for training the model.
+
+```bash
+python preprocess_data.py
+```
+
+### Training the Model
+
+### Generating Protein Structures and Sequences
+
+### Analysing Generated Protein Structures and Sequences
+
+
 
 ## Project Structure
 
 ## Features
 
-- Data preprocessing (handling missing values, normalization, etc.)
+- Data Download and preprocessing
 - Model training and evaluation
-- Saving and loading trained models
 - Generating protein structures and sequences
-
+- Analysing generated protein structures and sequences
 
 ## Contributing
 
