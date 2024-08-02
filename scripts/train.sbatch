@@ -1,6 +1,6 @@
 #!/bin/sh
 #SBATCH --partition=general,insy
-#SBATCH --job-name=8_1k_inf
+#SBATCH --job-name=train
 #SBATCH --qos=infinite         
 #SBATCH --time=600:00:00      
 #SBATCH --ntasks=1         
@@ -14,4 +14,4 @@ module load cuda/12.2 cudnn/12-8.9.1.23 miniconda/3.10
 
 conda activate /tudelft.net/staff-umbrella/Enzymix/Enzymix/thesis
 
-srun python train.py --wandb --tag 81kinf --resume ./logs/8_1k_inf/checkpoints/385.pt --num_steps 1000
+srun python train.py --wandb --tag train --num_steps 1000

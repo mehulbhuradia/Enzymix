@@ -125,15 +125,61 @@ Run the `preprocess_data.py` file to preprocess the data. This will generate jso
 python preprocess_data.py
 ```
 
+To upload the processed data to the DAIC server, run the following command:
+
+```bash
+scp -r swissprot_pdb_v4_processed daic:~/path/to/your/project/Enzymix/
+```
+
+### Calculating the Mean and Standard Deviation of the Protein Structure coordinates
+
+Run the `calc_ms.py` file to calculate the mean and standard deviation of the protein structure coordinates. This will be used to normalize the protein structure coordinates.
+
+```bash
+python calc_ms.py
+```
+
+Use the results to update the `model/dpm.py` file with the mean and standard deviation values.
+
 ### Training the Model
+To train the model, run the `train.py` file. The model will be trained on the processed data.
+
+```bash
+python train.py
+```
+
+See the `scripts` directory for an example training script and a an example script to resume training from a saved checkpoint. The trained model will be saved in the `logs/run_name/checkpoints` directory.
+
+See `train.py` for the available arguments to train the model.
 
 ### Generating Protein Structures and Sequences
 
+To generate protein structures and sequences, run the `generate500.py` file. The model will generate protein structures and sequences based on the trained model. This will generate 10 protiens for each length from 50 to 100.
+
+```bash
+python generate500.py --resume path/to/your/project/Enzymix/logs/run_name/checkpoints/final_checkpoint.pt
+```
+
+See the `scripts/sample.sbatch` file for an example script to generate protein structures and sequences on the DAIC cluster.
+
 ### Analysing Generated Protein Structures and Sequences
 
+To analyse the generated protein structures and sequences: We calculate the ESM pseudoperplexity, the OmegaFold confidence score for the sequences. We calculate the scTM score and the training tm score for the protein structures. We also calculate the sequence-structure correlation using the ccTM scores and amino acid consistency.
 
+To calculate these we use various scripts and notebooks:
 
-## Project Structure
+- `scripts/sampleandanalysis.sbatch` - This script generates protein structures and sequences and calculates the ESM pseudoperplexity, OmegaFold confidence score, scTM score.
+- `scripts/trainingtm.sbatch` - This script calculates the training tm score for the protein structures.
+- `scripts/cctm.sbatch` - This script calculates the ccTM score for the protein structures.
+- `plots/AAC.ipynb` - This notebook calculates the amino acid consistency for the protein structures.
+
+To calculate the AAC, you need to download the generated protein structures and sequences from the DAIC cluster. 
+
+To download the generated protein structures and sequences from the DAIC cluster, run the following command:
+
+```bash
+scp -r daic:~/path/to/your/project/Enzymix/generated generated
+```
 
 ## Features
 

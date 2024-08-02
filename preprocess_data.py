@@ -61,7 +61,7 @@ files = os.listdir(directory_path)
 for file in files:
   f_path = os.path.join(directory_path, file)
   if os.path.isfile(f_path) and file.endswith('.pdb'):  
-    protid = file.split('.')[0]
+    protid = file.split('.')[0].split('-')[1]
     save_dict = {}
     save_dict['UNIPROT_ID'] = protid
     path=f_path

@@ -36,7 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_len', type=int, default=100)
     parser.add_argument('--min_len', type=int, default=50)
     parser.add_argument('--path', type=str, default='/tudelft.net/staff-umbrella/DIMA/swiss_p')
-    parser.add_argument('--test_size', type=int, default=100)
+    parser.add_argument('--test_size', type=int, default=0)
     
     args = parser.parse_args()
 
